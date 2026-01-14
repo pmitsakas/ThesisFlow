@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { userController } = require('../controllers');
+const { protect, isStudent } = require('../middleware/auth');
 const { 
-  protect, 
   isAdmin,
   validateUserCreate,
   validateUserUpdate,
@@ -11,17 +11,38 @@ const {
 } = require('../middleware');
 
 router.get(
+  '/active-teachers',
+  protect,
+  userController.getActiveTeachers  
+);
+
+router.get(
+  '/profile',
+  protect,
+  isStudent,
+  userController.getMyProfile
+);
+
+router.put(
+  '/profile',
+  protect,
+  isStudent,
+  userController.updateMyProfile
+);
+
+router.post(
+  '/generate-proposal',
+  protect,
+  isStudent,
+  userController.generateProposal
+);
+
+router.get(
   '/',
   protect,
   isAdmin,
   validateQueryFilters,
   userController.getAllUsers
-);
-
-router.get(
-  '/active-teachers',
-  protect,
-  userController.getActiveTeachers  
 );
 
 router.get(

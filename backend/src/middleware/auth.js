@@ -48,6 +48,7 @@ exports.protect = async (req, res, next) => {
       }
 
       req.user = {
+        _id: user._id,
         userId: user._id,
         role: user.role,
         email: user.email

@@ -29,7 +29,6 @@ const systemSettingsSchema = new mongoose.Schema({
   timestamps: { updatedAt: 'updated_at' }
 });
 
-systemSettingsSchema.index({ setting_key: 1 });
 
 systemSettingsSchema.pre('save', function(next) {
   this.updated_at = new Date();

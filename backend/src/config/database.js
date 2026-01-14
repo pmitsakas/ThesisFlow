@@ -2,16 +2,11 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const options = { 
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      
+    const options = {     
       maxPoolSize: 10,
       minPoolSize: 2,
-      
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
-      
       autoIndex: true
     };
 

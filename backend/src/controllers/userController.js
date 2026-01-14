@@ -381,3 +381,156 @@ exports.getActiveTeachers = async (req, res) => {
     });
   }
 };
+
+exports.getMyProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'USER_NOT_FOUND',
+          message: 'User not found'
+        }
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: user.toPublicJSON()
+    });
+
+  } catch (error) {
+    console.error('Get my profile error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'SERVER_ERROR',
+        message: 'An error occurred while fetching profile'
+      }
+    });
+  }
+};
+
+exports.updateMyProfile = async (req, res) => {
+  try {
+    const { studentProfile } = req.body;
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'USER_NOT_FOUND',
+          message: 'User not found'
+        }
+      });
+    }
+
+    if (studentProfile) {
+      user.studentProfile = {
+        interests: studentProfile.interests || [],
+        preferredTopics: studentProfile.preferredTopics || [],
+        skills: studentProfile.skills || [],
+        programmingLanguages: studentProfile.programmingLanguages || [],
+        careerGoals: studentProfile.careerGoals || '',
+        previousExperience: studentProfile.previousExperience || '',
+        researchMethodology: studentProfile.researchMethodology || '',
+        weeklyHours: studentProfile.weeklyHours || 10,
+        difficultyLevel: studentProfile.difficultyLevel || '',
+        coreCoursesFavorites: studentProfile.coreCoursesFavorites || [],
+        advancedTopicsInterest: studentProfile.advancedTopicsInterest || [],
+        researchAreas: studentProfile.researchAreas || []
+      };
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      data: user.toPublicJSON(),
+      message: 'Profile updated successfully'
+    });
+
+  } catch (error) {
+    console.error('Update my profile error:', error);
+
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Validation failed',
+          details: errors
+        }
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'SERVER_ERROR',
+        message: 'An error occurred while updating profile'
+      }
+    });
+  }
+};
+
+exports.generateProposal = async (req, res) => {
+  try {
+    const { track } = req.body;
+
+    if (!track) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'MISSING_TRACK',
+          message: 'Track is required'
+        }
+      });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'USER_NOT_FOUND',
+          message: 'User not found'
+        }
+      });
+    }
+
+    if (!user.studentProfile) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'PROFILE_INCOMPLETE',
+          message: 'Please complete your student profile first'
+        }
+      });
+    }
+
+    const geminiService = require('../services/geminiService');
+    const proposal = await geminiService.generateDissertationProposal(user.studentProfile, track);
+
+    res.status(200).json({
+      success: true,
+      data: proposal
+    });
+
+  } catch (error) {
+    console.error('Generate proposal error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'SERVER_ERROR',
+        message: error.message || 'An error occurred while generating proposal'
+      }
+    });
+  }
+};

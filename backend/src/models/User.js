@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Password is required'],
     minlength: [8, 'Password must be at least 8 characters'],
-    select: false 
+    select: false
   },
   role: {
     type: String,
@@ -52,16 +52,70 @@ const userSchema = new mongoose.Schema({
   updated_at: {
     type: Date,
     default: Date.now
+  },
+  studentProfile: {
+    interests: {
+      type: [String],
+      default: []
+    },
+    preferredTopics: {
+      type: [String],
+      default: []
+    },
+    skills: {
+      type: [String],
+      default: []
+    },
+    programmingLanguages: {
+      type: [String],
+      default: []
+    },
+    careerGoals: {
+      type: String,
+      default: ''
+    },
+    previousExperience: {
+      type: String,
+      default: ''
+    },
+    researchMethodology: {
+      type: String,
+      enum: ['theoretical', 'practical', 'mixed', ''],
+      default: ''
+    },
+    weeklyHours: {
+      type: Number,
+      min: 0,
+      max: 40,
+      default: 10
+    },
+    difficultyLevel: {
+      type: String,
+      enum: ['beginner', 'intermediate', 'advanced', ''],
+      default: ''
+    },
+    coreCoursesFavorites: {
+      type: [String],
+      default: []
+    },
+    advancedTopicsInterest: {
+      type: [String],
+      default: []
+    },
+    researchAreas: {
+      type: [String],
+      default: []
+    }
   }
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
 
-userSchema.index({ email: 1 });
+
 userSchema.index({ role: 1 });
 userSchema.index({ is_active: 1 });
 
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
     return next();
   }
@@ -76,7 +130,7 @@ userSchema.pre('save', async function(next) {
 });
 
 
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
   try {
     return await bcrypt.compare(candidatePassword, this.password);
   } catch (error) {
@@ -87,7 +141,7 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
 
 
 
-userSchema.methods.toPublicJSON = function() {
+userSchema.methods.toPublicJSON = function () {
   return {
     _id: this._id,
     name: this.name,
@@ -96,15 +150,16 @@ userSchema.methods.toPublicJSON = function() {
     role: this.role,
     is_active: this.is_active,
     created_at: this.created_at,
-    updated_at: this.updated_at
+    updated_at: this.updated_at,
+    studentProfile: this.studentProfile
   };
 };
 
-userSchema.statics.findActiveTeachers = function() {
+userSchema.statics.findActiveTeachers = function () {
   return this.find({ role: 'teacher', is_active: true });
 };
 
-userSchema.statics.findActiveByRole = function(role) {
+userSchema.statics.findActiveByRole = function (role) {
   return this.find({ role, is_active: true });
 };
 

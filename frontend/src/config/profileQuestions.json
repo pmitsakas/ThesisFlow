@@ -1,0 +1,117 @@
+{
+  "coreCourses": [
+    "Programming Principles and Algorithms",
+    "Object-Oriented Programming",
+    "Data Structures and Algorithms",
+    "Computer Architecture",
+    "Database Systems",
+    "Computer Networks Architecture",
+    "Web Programming",
+    "Operating Systems",
+    "Software Engineering",
+    "Information Systems Analysis and Design"
+  ],
+  "advancedTopics": [
+    "Artificial Intelligence Techniques",
+    "Machine Learning",
+    "Deep Learning",
+    "Data Science",
+    "Big Data",
+    "Cloud Computing",
+    "Network Computing",
+    "Information Security",
+    "Mobile Application Development",
+    "Game Design and Development",
+    "Front-end Application Development",
+    "Back-end Application Development",
+    "Social Media and Networks",
+    "E-Commerce and Digital Markets",
+    "Agents and Robotics",
+    "Nature-Inspired Computing",
+    "Formal Methods and Software Reliability",
+    "Human-Computer Interaction",
+    "Knowledge Technologies for Innovation",
+    "Functional Programming",
+    "Logic Programming",
+    "Green Computing"
+  ],
+  "programmingLanguages": [
+    "Java",
+    "JavaScript",
+    "Python",
+    "Prolog",
+    "Haskell",
+    "C++",
+    "C#",
+    "PHP",
+    "SQL",
+    "TypeScript",
+    "HTML/CSS"
+  ],
+  "technicalSkills": [
+    "Web Development (Frontend)",
+    "Web Development (Backend)",
+    "Full-Stack Development",
+    "Mobile Development",
+    "Database Design & Management",
+    "Network Administration",
+    "Cloud Services (AWS/Azure/GCP)",
+    "DevOps & CI/CD",
+    "API Development",
+    "Data Analysis & Visualization",
+    "Machine Learning Model Development",
+    "Software Testing & QA",
+    "UI/UX Design",
+    "Cybersecurity Practices",
+    "Version Control (Git)",
+    "Agile/Scrum Methodologies"
+  ],
+  "researchAreas": [
+    "Theoretical Computer Science",
+    "Applied Software Development",
+    "Data-Driven Research",
+    "AI & Machine Learning",
+    "Network & Distributed Systems",
+    "Human-Computer Interaction",
+    "Information Security",
+    "Business & IT Strategy"
+  ],
+  "tracks": [
+    "Computer Science",
+    "Software Engineering",
+    "Data Science",
+    "Artificial Intelligence",
+    "Cybersecurity",
+    "Information Systems",
+    "Computer Networks",
+    "Human-Computer Interaction"
+  ],
+  "researchMethodologies": [
+    {
+      "value": "theoretical",
+      "label": "Theoretical (Research papers, theoretical analysis, algorithms)"
+    },
+    {
+      "value": "practical",
+      "label": "Practical (Implementation, software development, systems)"
+    },
+    {
+      "value": "mixed",
+      "label": "Mixed (Combining theory with practical implementation)"
+    }
+  ],
+  "difficultyLevels": [
+    {
+      "value": "beginner",
+      "label": "Standard (Building on course knowledge)"
+    },
+    {
+      "value": "intermediate",
+      "label": "Intermediate (Exploring new concepts & technologies)"
+    },
+    {
+      "value": "advanced",
+      "label": "Advanced (Cutting-edge research & innovation)"
+    }
+  ]
+}

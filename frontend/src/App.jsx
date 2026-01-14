@@ -17,6 +17,7 @@ import DissertationDetails from './pages/DissertationDetails';
 import MyProposals from './pages/MyProposals';
 import ProposeTopic from './pages/ProposeTopic';
 import PendingProposals from './pages/PendingProposals';
+import StudentProfile from './pages/student/StudentProfile';
 
 function App() {
   return (
@@ -96,6 +97,14 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['teacher']}>
                   <MyStudents />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/profile"
+              element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentProfile />
                 </ProtectedRoute>
               }
             />

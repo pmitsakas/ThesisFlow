@@ -1,8 +1,9 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { FiPlus, FiUsers, FiBookOpen, FiLock , FiClock } from 'react-icons/fi';
+import { FiPlus, FiUsers, FiBookOpen, FiLock, FiClock, FiUser } from 'react-icons/fi';
 import { FiSearch, FiFileText } from 'react-icons/fi';
-import { FiUsers as FiUsersIcon, FiSettings  } from 'react-icons/fi';
+import { FiUsers as FiUsersIcon, FiSettings } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const { user, hasActiveDissertation } = useAuth();
@@ -145,6 +146,13 @@ const Dashboard = () => {
                     ) : (
                       <>
                         <a
+                          href="/student/profile"
+                          className="w-full text-left px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition flex items-center"
+                        >
+                          <FiUser className="h-5 w-5 text-blue-600 mr-3" />
+                          <span className="text-sm font-medium text-gray-700">My Profile</span>
+                        </a>
+                        <a
                           href="/browse-topics"
                           className="w-full text-left px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition flex items-center"
                         >
@@ -160,7 +168,7 @@ const Dashboard = () => {
                         </a>
                       </>
                     )}
-                    {!hasActiveDissertation && 
+                    {!hasActiveDissertation &&
                       <a
                         href="/my-proposals"
                         className="w-full text-left px-4 py-3 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition flex items-center"
@@ -176,7 +184,9 @@ const Dashboard = () => {
                       <FiFileText className="h-5 w-5 text-green-600 mr-3" />
                       <span className="text-sm font-medium text-gray-700">My Dissertation</span>
                     </a>
+
                   </>
+
                 )}
 
                 {user?.role === 'teacher' && (
@@ -240,6 +250,7 @@ const Dashboard = () => {
                 Navigate through the system using the menu above.
               </p>
             </div>
+
           </div>
         </div>
       </div>

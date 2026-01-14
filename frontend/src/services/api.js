@@ -46,7 +46,11 @@ export const userAPI = {
   create: (data) => api.post('/users', data),
   update: (id, data) => api.put(`/users/${id}`, data),
   delete: (id) => api.delete(`/users/${id}`),
-  getActiveTeachers: () => api.get('/users/active-teachers')
+  getActiveTeachers: () => api.get('/users/active-teachers'),
+  
+  getMyProfile: () => api.get('/users/profile'),
+  updateMyProfile: (data) => api.put('/users/profile', data),
+  generateProposal: (track) => api.post('/users/generate-proposal', { track })
 };
 
 export const dissertationAPI = {
