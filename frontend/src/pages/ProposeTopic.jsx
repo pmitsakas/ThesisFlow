@@ -115,10 +115,16 @@ const ProposeTopic = () => {
       const payload = {
         track: formData.track,
         title: formData.title,
-        description: formData.description || undefined,
-        supervisorId: formData.supervisorId,
-        deadline: formData.deadline || undefined
+        supervisorId: formData.supervisorId
       };
+
+      if (formData.description && formData.description.trim()) {
+        payload.description = formData.description;
+      }
+
+      if (formData.deadline && formData.deadline.trim()) {
+        payload.deadline = formData.deadline;
+      }
 
       await dissertationAPI.propose(payload);
       setSuccess('Proposal submitted successfully! Waiting for teacher approval.');
@@ -134,7 +140,11 @@ const ProposeTopic = () => {
   };
 
   const isFormValid = () => {
-    return formData.track && formData.title.length >= 10 && formData.supervisorId;
+    return formData.track &&
+      formData.title.length >= 10 &&
+      formData.title.length <= 200 &&
+      formData.description.length <= 3000 &&
+      formData.supervisorId;
   };
 
   if (hasActiveDissertation) {
@@ -274,12 +284,12 @@ const ProposeTopic = () => {
                   value={formData.description}
                   onChange={handleChange}
                   rows="6"
-                  maxLength="2000"
+                  maxLength="3000"
                   placeholder="Describe your proposed dissertation topic, objectives, methodology, and expected outcomes..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  {formData.description.length}/2000 characters
+                  {formData.description.length}/3000 characters
                 </p>
               </div>
 

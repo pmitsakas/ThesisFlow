@@ -74,11 +74,11 @@ STUDENT PROFILE:
 REQUIREMENTS:
 1. Create a dissertation title that is specific, engaging, and academically sound
 2. The title must be between 10-200 characters
-3. Provide a comprehensive description (max 2000 characters) that includes:
+3. Provide a comprehensive description (under 1800 characters (STRICT LIMIT - count carefully!) , Be concise and focused - quality over quantity) that includes:
    - Clear research objectives
    - Proposed methodology
    - Expected outcomes
-   - Relevance to the student's interests and career goals
+   
 4. Ensure the proposal matches the student's skill level and available time
 5. Make it relevant to the selected academic track: ${track}
 
@@ -97,7 +97,8 @@ You MUST respond with a valid JSON object in this EXACT format (no additional te
 
 IMPORTANT: 
 - The title must be between 10-200 characters
-- The description must be detailed but under 2000 characters
+- The description MUST be under 1800 characters (STRICT LIMIT - count carefully!)
+- Be concise and focused - quality over quantity
 - Use the student's programming languages and skills in the methodology
 - Align with their career goals and research methodology preference
 

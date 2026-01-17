@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { FiPlus, FiUsers, FiBookOpen, FiLock, FiClock, FiUser } from 'react-icons/fi';
 import { FiSearch, FiFileText } from 'react-icons/fi';
 import { FiUsers as FiUsersIcon, FiSettings } from 'react-icons/fi';
-import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const { user, hasActiveDissertation } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const getRoleBadgeColor = (role) => {
     switch (role) {
@@ -34,6 +34,23 @@ const Dashboard = () => {
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="mt-2 text-gray-600">Welcome back to your workspace</p>
         </div>
+
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="lg:hidden fixed bottom-6 right-6 z-50 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition"
+        >
+          {isMobileMenuOpen ? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </button>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"></div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
@@ -112,9 +129,25 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="space-y-6">
-            <div className="bg-white shadow-lg rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <div className={`
+            space-y-6 
+            fixed lg:static inset-y-0 right-0 z-40
+            w-80 lg:w-auto
+            transform transition-transform duration-300 ease-in-out
+            ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+          `}>
+            <div className="bg-white shadow-lg rounded-lg p-6 h-full lg:h-auto overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="lg:hidden text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
               <div className="space-y-3">
                 {user?.role === 'student' && (
                   <>
@@ -253,6 +286,12 @@ const Dashboard = () => {
 
           </div>
         </div>
+        {isMobileMenuOpen && (
+          <div
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+          />
+        )}
       </div>
     </div>
   );
