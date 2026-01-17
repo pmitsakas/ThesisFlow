@@ -520,7 +520,7 @@ exports.generateProposal = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: proposal
+      data: proposal.data
     });
 
   } catch (error) {

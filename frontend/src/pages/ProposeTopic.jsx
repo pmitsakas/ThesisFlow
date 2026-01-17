@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { dissertationAPI, userAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { FiZap, FiLoader } from 'react-icons/fi';
 
 const ProposeTopic = () => {
   const { user, hasActiveDissertation } = useAuth();
@@ -15,6 +16,7 @@ const ProposeTopic = () => {
   });
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [generatingAI, setGeneratingAI] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -33,9 +35,9 @@ const ProposeTopic = () => {
     fetchTeachers();
   }, []);
 
-    const fetchTeachers = async () => {
+  const fetchTeachers = async () => {
     try {
-      const response = await userAPI.getActiveTeachers(); 
+      const response = await userAPI.getActiveTeachers();
       setTeachers(response.data.data);
     } catch (err) {
       console.error('Failed to load teachers:', err);
@@ -48,6 +50,59 @@ const ProposeTopic = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleGenerateWithAI = async () => {
+    if (!formData.track) {
+      setError('Please select a track first to generate AI proposal');
+      return;
+    }
+
+    setGeneratingAI(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await userAPI.generateProposal(formData.track);
+      const aiProposal = response.data.data;
+
+      console.log('=== FRONTEND: AI Proposal Received ===');
+      console.log('Full response:', response.data);
+      console.log('AI Proposal data:', aiProposal);
+      console.log('Title:', aiProposal.title);
+      console.log('Description:', aiProposal.description);
+      console.log('Deadline:', aiProposal.suggestedDeadline);
+      console.log('====================================');
+
+      setFormData(prev => ({
+        ...prev,
+        title: aiProposal.title || '',
+        description: aiProposal.description || '',
+        deadline: aiProposal.suggestedDeadline || ''
+      }));
+
+      console.log('=== FRONTEND: Form data after update ===');
+      console.log('New formData will be:', {
+        ...formData,
+        title: aiProposal.title || '',
+        description: aiProposal.description || '',
+        deadline: aiProposal.suggestedDeadline || ''
+      });
+      console.log('====================================');
+
+      setSuccess('AI proposal generated successfully! You can edit the fields before submitting.');
+    } catch (err) {
+      const errorMessage = err.response?.data?.error?.message || 'Failed to generate AI proposal';
+      setError(errorMessage);
+
+      if (errorMessage.includes('profile')) {
+        setTimeout(() => {
+          navigate('/profile');
+        }, 2000);
+      }
+    } finally {
+      setGeneratingAI(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -67,7 +122,7 @@ const ProposeTopic = () => {
 
       await dissertationAPI.propose(payload);
       setSuccess('Proposal submitted successfully! Waiting for teacher approval.');
-      
+
       setTimeout(() => {
         navigate('/my-proposals');
       }, 2000);
@@ -118,14 +173,20 @@ const ProposeTopic = () => {
           <form onSubmit={handleSubmit}>
             <div className="p-6 space-y-6">
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                  {error}
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-start">
+                  <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <span>{error}</span>
                 </div>
               )}
 
               {success && (
-                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
-                  {success}
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm flex items-start">
+                  <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>{success}</span>
                 </div>
               )}
 
@@ -145,6 +206,43 @@ const ProposeTopic = () => {
                     <option key={track} value={track}>{track}</option>
                   ))}
                 </select>
+              </div>
+
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center mb-2">
+                      <FiZap className="w-5 h-5 text-purple-600 mr-2" />
+                      <h3 className="text-sm font-semibold text-purple-900">AI-Powered Proposal Generator</h3>
+                    </div>
+                    <p className="text-xs text-purple-700 mb-3">
+                      Let AI create a personalized dissertation proposal based on your student profile and selected track.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleGenerateWithAI}
+                  disabled={!formData.track || generatingAI}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium flex items-center justify-center"
+                >
+                  {generatingAI ? (
+                    <>
+                      <FiLoader className="w-5 h-5 mr-2 animate-spin" />
+                      Generating with AI...
+                    </>
+                  ) : (
+                    <>
+                      <FiZap className="w-5 h-5 mr-2" />
+                      Generate Proposal with AI
+                    </>
+                  )}
+                </button>
+                {!formData.track && (
+                  <p className="text-xs text-purple-600 mt-2 text-center">
+                    Please select a track first
+                  </p>
+                )}
               </div>
 
               <div>

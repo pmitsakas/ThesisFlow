@@ -4,7 +4,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const generateDissertationProposal = async (studentProfile, track) => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = buildPrompt(studentProfile, track);
     
@@ -16,6 +16,9 @@ const generateDissertationProposal = async (studentProfile, track) => {
     const jsonText = jsonMatch ? jsonMatch[1] : text;
     
     const proposalData = JSON.parse(jsonText.trim());
+    console.log('Title:', proposalData.title);
+    console.log('Description length:', proposalData.description?.length);
+    console.log('Suggested Deadline:', proposalData.suggestedDeadline);
     
     return {
       success: true,
@@ -43,7 +46,10 @@ const buildPrompt = (studentProfile, track) => {
     previousExperience = '',
     researchMethodology = '',
     weeklyHours = 10,
-    difficultyLevel = ''
+    difficultyLevel = '',
+    coreCoursesFavorites = [],
+    advancedTopicsInterest = [],
+    researchAreas = []
   } = studentProfile || {};
 
   return `You are an expert academic advisor specializing in Computer Science dissertations.
@@ -52,6 +58,9 @@ Generate a personalized dissertation proposal based on the following student pro
 
 STUDENT PROFILE:
 - Academic Track: ${track}
+- Core Courses Favorites: ${coreCoursesFavorites.length > 0 ? coreCoursesFavorites.join(', ') : 'Not specified'}
+- Advanced Topics Interest: ${advancedTopicsInterest.length > 0 ? advancedTopicsInterest.join(', ') : 'Not specified'}
+- Research Areas: ${researchAreas.length > 0 ? researchAreas.join(', ') : 'Not specified'}
 - Interests: ${interests.length > 0 ? interests.join(', ') : 'Not specified'}
 - Preferred Topics: ${preferredTopics.length > 0 ? preferredTopics.join(', ') : 'Not specified'}
 - Technical Skills: ${skills.length > 0 ? skills.join(', ') : 'Not specified'}
@@ -64,7 +73,7 @@ STUDENT PROFILE:
 
 REQUIREMENTS:
 1. Create a dissertation title that is specific, engaging, and academically sound
-2. The title must be 10-200 characters
+2. The title must be between 10-200 characters
 3. Provide a comprehensive description (max 2000 characters) that includes:
    - Clear research objectives
    - Proposed methodology
@@ -74,7 +83,7 @@ REQUIREMENTS:
 5. Make it relevant to the selected academic track: ${track}
 
 RESPONSE FORMAT:
-You MUST respond with a valid JSON object in this EXACT format (no additional text):
+You MUST respond with a valid JSON object in this EXACT format (no additional text before or after):
 
 \`\`\`json
 {
@@ -85,6 +94,12 @@ You MUST respond with a valid JSON object in this EXACT format (no additional te
   "keyTechnologies": ["Technology1", "Technology2", "Technology3"]
 }
 \`\`\`
+
+IMPORTANT: 
+- The title must be between 10-200 characters
+- The description must be detailed but under 2000 characters
+- Use the student's programming languages and skills in the methodology
+- Align with their career goals and research methodology preference
 
 Generate the proposal now:`;
 };
