@@ -18,6 +18,8 @@ import MyProposals from './pages/MyProposals';
 import ProposeTopic from './pages/ProposeTopic';
 import PendingProposals from './pages/PendingProposals';
 import StudentProfile from './pages/student/StudentProfile';
+import StudentCalendar from './pages/StudentCalendar';
+import Onboarding from './pages/onboarding';
 
 function App() {
   return (
@@ -129,6 +131,22 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['teacher']}>
                   <PendingProposals />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentCalendar />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/onboarding"
+              element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <Onboarding />
                 </ProtectedRoute>
               }
             />

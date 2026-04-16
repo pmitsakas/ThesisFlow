@@ -1,5 +1,7 @@
 const { body, param, query, validationResult } = require('express-validator');
 
+const VALID_TRACKS = ['AI&DS', 'WT', 'BI'];
+
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -71,18 +73,35 @@ exports.validateUserUpdate = [
 ];
 
 exports.validateDissertationCreate = [
-  body('track')
-    .notEmpty().withMessage('Track is required')
-    .isIn([
-      'Computer Science',
-      'Software Engineering',
-      'Data Science',
-      'Artificial Intelligence',
-      'Cybersecurity',
-      'Information Systems',
-      'Computer Networks',
-      'Human-Computer Interaction'
-    ]).withMessage('Invalid track'),
+  body('code')
+    .trim()
+    .notEmpty().withMessage('Dissertation code is required'),
+  body('tracks')
+    .isArray({ min: 1 }).withMessage('At least one track is required')
+    .custom((arr) => arr.every(t => VALID_TRACKS.includes(t)))
+    .withMessage('All tracks must be valid (AI&DS, WT, BI)'),
+  body('title')
+    .trim()
+    .notEmpty().withMessage('Title is required')
+    .isLength({ min: 10, max: 200 }).withMessage('Title must be between 10 and 200 characters'),
+  body('description')
+    .optional()
+    .trim()
+    .isLength({ max: 3000 }).withMessage('Description must not exceed 3000 characters'),
+  body('supervisorId')
+    .notEmpty().withMessage('Supervisor ID is required')
+    .isMongoId().withMessage('Invalid supervisor ID'),
+  body('deadline')
+    .optional()
+    .isISO8601().withMessage('Deadline must be a valid date'),
+  handleValidationErrors
+];
+
+exports.validateProposalCreate = [
+  body('tracks')
+    .isArray({ min: 1 }).withMessage('At least one track is required')
+    .custom((arr) => arr.every(t => VALID_TRACKS.includes(t)))
+    .withMessage('All tracks must be valid (AI&DS, WT, BI)'),
   body('title')
     .trim()
     .notEmpty().withMessage('Title is required')
@@ -101,18 +120,11 @@ exports.validateDissertationCreate = [
 ];
 
 exports.validateDissertationUpdate = [
-  body('track')
+  body('tracks')
     .optional()
-    .isIn([
-      'Computer Science',
-      'Software Engineering',
-      'Data Science',
-      'Artificial Intelligence',
-      'Cybersecurity',
-      'Information Systems',
-      'Computer Networks',
-      'Human-Computer Interaction'
-    ]).withMessage('Invalid track'),
+    .isArray({ min: 1 }).withMessage('At least one track is required')
+    .custom((arr) => arr.every(t => VALID_TRACKS.includes(t)))
+    .withMessage('All tracks must be valid (AI&DS, WT, BI)'),
   body('title')
     .optional()
     .trim()

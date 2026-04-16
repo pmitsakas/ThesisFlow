@@ -6,6 +6,8 @@ const settingsRoutes = require('./settings.routes');
 const applicationRoutes = require('./application.routes');
 const notificationRoutes = require('./notification.routes');
 const fileRoutes = require('./file.routes');
+const calendarRoutes = require('./calendar.routes');
+
 
 module.exports = {
   authRoutes,
@@ -15,5 +17,6 @@ module.exports = {
   settingsRoutes,
   applicationRoutes,
   notificationRoutes,
-  fileRoutes
+  fileRoutes,
+  calendarRoutes
 };

@@ -2,28 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { dissertationAPI, applicationAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
+const TRACKS = ['AI&DS', 'WT', 'BI'];
+
+const TRACK_LABELS = {
+  'AI&DS': 'Artificial Intelligence & Data Science',
+  'WT': 'Web Technologies',
+  'BI': 'Business Informatics'
+};
+
+const TRACK_COLORS = {
+  'AI&DS': 'bg-red-100 text-red-800',
+  'WT': 'bg-blue-100 text-blue-800',
+  'BI': 'bg-green-100 text-green-800'
+};
+
 const BrowseTopics = () => {
   const { user } = useAuth();
   const [dissertations, setDissertations] = useState([]);
   const [filteredDissertations, setFilteredDissertations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedTrack, setSelectedTrack] = useState('all');
+  const [selectedTracks, setSelectedTracks] = useState(user?.track ? [user.track] : []);
   const [searchTerm, setSearchTerm] = useState('');
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [selectedDissertation, setSelectedDissertation] = useState(null);
   const [myApplications, setMyApplications] = useState([]);
-
-  const tracks = [
-    'Computer Science',
-    'Software Engineering',
-    'Data Science',
-    'Artificial Intelligence',
-    'Cybersecurity',
-    'Information Systems',
-    'Computer Networks',
-    'Human-Computer Interaction'
-  ];
 
   useEffect(() => {
     fetchData();
@@ -31,7 +34,7 @@ const BrowseTopics = () => {
 
   useEffect(() => {
     filterDissertations();
-  }, [selectedTrack, searchTerm, dissertations]);
+  }, [selectedTracks, searchTerm, dissertations]);
 
   const fetchData = async () => {
     try {
@@ -55,24 +58,40 @@ const BrowseTopics = () => {
   const filterDissertations = () => {
     let filtered = [...dissertations];
 
-    if (selectedTrack !== 'all') {
-      filtered = filtered.filter(d => d.track === selectedTrack);
+    if (selectedTracks.length > 0) {
+      filtered = filtered.filter(d =>
+        d.tracks && d.tracks.some(t => selectedTracks.includes(t))
+      );
     }
 
     if (searchTerm) {
       filtered = filtered.filter(d =>
         d.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        d.description?.toLowerCase().includes(searchTerm.toLowerCase())
+        d.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        d.code?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     setFilteredDissertations(filtered);
   };
 
+  const toggleTrack = (track) => {
+    setSelectedTracks(prev =>
+      prev.includes(track) ? prev.filter(t => t !== track) : [...prev, track]
+    );
+  };
+
   const hasApplied = (dissertationId) => {
     return myApplications.some(
-      app => app.dissertationId._id === dissertationId && app.status === 'pending'
+      app => (app.dissertationId._id === dissertationId || app.dissertationId === dissertationId) && app.status === 'pending'
     );
+  };
+
+  const getAppliedTier = (dissertationId) => {
+    const app = myApplications.find(
+      app => (app.dissertationId._id === dissertationId || app.dissertationId === dissertationId) && app.status === 'pending'
+    );
+    return app?.tier;
   };
 
   const isRejected = (dissertationId) => {
@@ -115,30 +134,21 @@ const BrowseTopics = () => {
         )}
 
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by title or description..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Track</label>
-              <select
-                value={selectedTrack}
-                onChange={(e) => setSelectedTrack(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Tracks</option>
-                {tracks.map(track => (
-                  <option key={track} value={track}>{track}</option>
-                ))}
-              </select>
-            </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by title, description or code..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Track</label>
+            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${TRACK_COLORS[user?.track] || 'bg-gray-100 text-gray-800'}`}>
+              {user?.track || '-'}
+            </span>
           </div>
         </div>
 
@@ -163,6 +173,7 @@ const BrowseTopics = () => {
                 hasApplied={hasApplied(dissertation._id)}
                 isRejected={isRejected(dissertation._id)}
                 isApproved={isApproved(dissertation._id)}
+                appliedTier={getAppliedTier(dissertation._id)}
                 onApply={() => handleApply(dissertation)}
               />
             ))}
@@ -188,29 +199,22 @@ const BrowseTopics = () => {
   );
 };
 
-const DissertationCard = ({ dissertation, hasApplied, isRejected, isApproved, onApply }) => {
-  const getTrackColor = (track) => {
-    const colors = {
-      'Computer Science': 'bg-blue-100 text-blue-800',
-      'Software Engineering': 'bg-green-100 text-green-800',
-      'Data Science': 'bg-purple-100 text-purple-800',
-      'Artificial Intelligence': 'bg-red-100 text-red-800',
-      'Cybersecurity': 'bg-yellow-100 text-yellow-800',
-      'Information Systems': 'bg-indigo-100 text-indigo-800',
-      'Computer Networks': 'bg-pink-100 text-pink-800',
-      'Human-Computer Interaction': 'bg-orange-100 text-orange-800'
-    };
-    return colors[track] || 'bg-gray-100 text-gray-800';
-  };
-
+const DissertationCard = ({ dissertation, hasApplied, isRejected, isApproved, appliedTier, onApply }) => {
   return (
     <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition overflow-hidden">
       <div className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getTrackColor(dissertation.track)}`}>
-            {dissertation.track}
-          </span>
-          <div className="flex gap-2">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex flex-wrap gap-1">
+            {dissertation.tracks && dissertation.tracks.map(track => (
+              <span
+                key={track}
+                className={`px-2 py-1 text-xs font-semibold rounded-full ${TRACK_COLORS[track] || 'bg-gray-100 text-gray-800'}`}
+              >
+                {track}
+              </span>
+            ))}
+          </div>
+          <div className="flex gap-2 ml-2 flex-shrink-0">
             {hasApplied && (
               <span className="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
                 Applied
@@ -228,6 +232,10 @@ const DissertationCard = ({ dissertation, hasApplied, isRejected, isApproved, on
             )}
           </div>
         </div>
+
+        {dissertation.code && (
+          <p className="text-xs text-gray-500 font-mono mb-1">{dissertation.code}</p>
+        )}
 
         <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
           {dissertation.title}
@@ -282,26 +290,26 @@ const DissertationCard = ({ dissertation, hasApplied, isRejected, isApproved, on
         </div>
 
         <div className="mt-6">
-          <button
-            onClick={onApply}
-            disabled={hasApplied || isRejected || isApproved}
-            className={`w-full py-2 px-4 rounded-lg font-semibold transition ${
-              isRejected
-                ? 'bg-red-300 text-red-700 cursor-not-allowed'
-                : hasApplied || isApproved
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
-            }`}
-          >
-            {isRejected 
-              ? 'Application Rejected' 
-              : hasApplied 
-              ? 'Application Pending'
-              : isApproved
-              ? 'Already Approved'
-              : 'Express Interest'
-            }
-          </button>
+          {isApproved ? (
+            <div className="w-full py-2 px-4 rounded-lg bg-green-100 text-green-700 text-center text-sm font-semibold">
+              Approved ✓
+            </div>
+          ) : hasApplied ? (
+            <div className="w-full py-2 px-4 rounded-lg bg-gray-100 text-gray-600 text-center text-sm font-semibold">
+              Tier {appliedTier} Pending
+            </div>
+          ) : isRejected ? (
+            <div className="w-full py-2 px-4 rounded-lg bg-red-100 text-red-700 text-center text-sm font-semibold">
+              Rejected
+            </div>
+          ) : (
+            <button
+              onClick={onApply}
+              className="w-full py-2 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition text-sm"
+            >
+              Add to Declaration
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -310,8 +318,31 @@ const DissertationCard = ({ dissertation, hasApplied, isRejected, isApproved, on
 
 const ApplicationModal = ({ dissertation, onClose, onSuccess }) => {
   const [message, setMessage] = useState('');
+  const [tier, setTier] = useState(1);
+  const [tierCounts, setTierCounts] = useState({ 1: 0, 2: 0, 3: 0 });
+  const [takenPositions, setTakenPositions] = useState({ 1: [], 2: [], 3: [] });
+  const [position, setPosition] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const loadTierCounts = async () => {
+      try {
+        const res = await applicationAPI.getMyApplications();
+        const counts = { 1: 0, 2: 0, 3: 0 };
+        const taken = { 1: [], 2: [], 3: [] };
+        res.data.data.forEach(app => {
+          if (app.status !== 'rejected' && app.tier) {
+            counts[app.tier] = (counts[app.tier] || 0) + 1;
+            if (app.position) taken[app.tier].push(app.position);
+          }
+        });
+        setTierCounts(counts);
+        setTakenPositions(taken);
+      } catch { }
+    };
+    loadTierCounts();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -321,8 +352,9 @@ const ApplicationModal = ({ dissertation, onClose, onSuccess }) => {
     try {
       await applicationAPI.create({
         dissertationId: dissertation._id,
-        message: message.trim() || undefined
-      });
+        message: message.trim() || undefined,
+        position
+      }, tier);
       onSuccess();
     } catch (err) {
       setError(err.response?.data?.error?.message || 'Failed to submit application');
@@ -345,8 +377,17 @@ const ApplicationModal = ({ dissertation, onClose, onSuccess }) => {
           </div>
 
           <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+            {dissertation.code && (
+              <p className="text-xs text-gray-500 font-mono mb-1">{dissertation.code}</p>
+            )}
             <h3 className="font-semibold text-gray-900 mb-2">{dissertation.title}</h3>
-            <p className="text-sm text-gray-600 mb-2">{dissertation.track}</p>
+            <div className="flex flex-wrap gap-1 mb-2">
+              {dissertation.tracks && dissertation.tracks.map(track => (
+                <span key={track} className={`px-2 py-1 text-xs font-semibold rounded-full ${TRACK_COLORS[track] || 'bg-gray-100 text-gray-800'}`}>
+                  {track}
+                </span>
+              ))}
+            </div>
             <p className="text-sm text-gray-600">
               Supervisor: {dissertation.supervisorId?.name} {dissertation.supervisorId?.surname}
             </p>
@@ -363,6 +404,54 @@ const ApplicationModal = ({ dissertation, onClose, onSuccess }) => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Message to Supervisor (Optional)
               </label>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tier <span className="text-red-500">*</span></label>
+                <div className="flex gap-2">
+                  {[1, 2, 3].map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => { setTier(t); setPosition(1); }}
+                      disabled={tierCounts[t] >= 3}
+                      className={`flex-1 py-2 rounded-lg border-2 text-sm font-semibold transition ${tier === t
+                        ? 'border-blue-600 bg-blue-600 text-white'
+                        : tierCounts[t] >= 3
+                          ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'border-gray-300 text-gray-700 hover:border-blue-400'
+                        }`}
+                    >
+                      Tier {t} {tierCounts[t] >= 3 ? '(full)' : `(${tierCounts[t]}/3)`}
+                    </button>
+                  ))}
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Position in Tier {tier} <span className="text-red-500">*</span>
+                    <span className="ml-1 text-xs text-gray-400 font-normal">(1 = most preferred)</span>
+                  </label>
+                  <div className="flex gap-2">
+                    {[1, 2, 3].map((p) => {
+                      const isTaken = takenPositions[tier].includes(p);
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setPosition(p)}
+                          disabled={isTaken}
+                          className={`flex-1 py-2 rounded-lg border-2 text-sm font-semibold transition ${position === p
+                              ? 'border-blue-600 bg-blue-600 text-white'
+                              : isTaken
+                                ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : 'border-gray-300 text-gray-700 hover:border-blue-400'
+                            }`}
+                        >
+                          #{p} {isTaken ? '(taken)' : ''}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}

@@ -7,6 +7,10 @@ const path = require('path');
 const connectDB = require('./config/database');
 const { errorHandler, notFound } = require('./middleware');
 
+//επειδή δεν έκανε connect λόγο της νέας version του node.
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
+
 const {
   authRoutes,
   userRoutes,
@@ -15,19 +19,24 @@ const {
   settingsRoutes,
   applicationRoutes,
   notificationRoutes,
-  fileRoutes
+  fileRoutes,
+  calendarRoutes
 } = require('./routes');
+const { startReminderJob } = require('./jobs/reminderJob');
+
 
 const app = express();
 
 connectDB();
+startReminderJob();
 
 app.use(helmet());
 
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',') : ['http://localhost:3000', 'http://localhost:5173'],
   credentials: true
 }));
+
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
@@ -68,6 +77,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/files', fileRoutes);
+app.use('/api/calendar', calendarRoutes);
 
 app.use(notFound);
 

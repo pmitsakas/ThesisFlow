@@ -77,14 +77,9 @@
     "Business & IT Strategy"
   ],
   "tracks": [
-    "Computer Science",
-    "Software Engineering",
-    "Data Science",
-    "Artificial Intelligence",
-    "Cybersecurity",
-    "Information Systems",
-    "Computer Networks",
-    "Human-Computer Interaction"
+    { "value": "AI&DS", "label": "Artificial Intelligence & Data Science" },
+    { "value": "WT", "label": "Web Technologies" },
+    { "value": "BI", "label": "Business Informatics" }
   ],
   "researchMethodologies": [
     {

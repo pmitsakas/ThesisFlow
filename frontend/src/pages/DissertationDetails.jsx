@@ -8,6 +8,7 @@ import FileCard from '../components/FileCard';
 import FileUploader from '../components/FileUploader';
 import { getFileIcon } from '../utils/fileHelpers.jsx';
 import { FiFile } from 'react-icons/fi';
+import TeacherStudentCalendar from './TeacherStudentCalendar';
 
 const DissertationDetails = () => {
   const { id } = useParams();
@@ -18,6 +19,7 @@ const DissertationDetails = () => {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showStudentCalendar, setShowStudentCalendar] = useState(false);
 
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
@@ -270,9 +272,15 @@ const DissertationDetails = () => {
 
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <span className="px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-800">
-                    {dissertation.track}
-                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {dissertation.tracks && dissertation.tracks.map(t => (
+                      <span key={t} className={`px-3 py-1 text-sm font-semibold rounded-full ${
+                        t === 'AI&DS' ? 'bg-red-100 text-red-800' :
+                        t === 'WT' ? 'bg-blue-100 text-blue-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>{t}</span>
+                    ))}
+                  </div>
                   <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(dissertation.status)}`}>
                     {dissertation.status.toUpperCase()}
                   </span>
@@ -301,7 +309,15 @@ const DissertationDetails = () => {
                           >
                             Update
                           </button>
+
                         )}
+                        <button
+                          onClick={() => setShowStudentCalendar(true)}
+                          className="mt-3 w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition text-sm"
+                        >
+                          <FiCalendar className="w-4 h-4" />
+                          View Student's Calendar
+                        </button>
                       </div>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
@@ -516,27 +532,39 @@ const DissertationDetails = () => {
             </div>
 
             {isTeacher && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-blue-800">Supervisor Actions</h3>
-                    <div className="mt-2 text-sm text-blue-700">
-                      <ul className="list-disc list-inside space-y-1">
-                        <li>Update progress regularly</li>
-                        <li>Provide feedback via comments</li>
-                        <li>Change status as needed</li>
-                      </ul>
+              <div className="space-y-3">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-blue-800">Supervisor Actions</h3>
+                      <div className="mt-2 text-sm text-blue-700">
+                        <ul className="list-disc list-inside space-y-1">
+                          <li>Update progress regularly</li>
+                          <li>Provide feedback via comments</li>
+                          <li>Change status as needed</li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </div>
+                {dissertation?.studentId && (
+                  <button
+                    onClick={() => setShowStudentCalendar(true)}
+                    className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition text-sm"
+                  >
+                    <FiCalendar className="w-4 h-4" />
+                    View Student's Calendar
+                  </button>
+                )}
               </div>
             )}
           </div>
+
         </div>
       </div>
 
@@ -559,6 +587,23 @@ const DissertationDetails = () => {
           onClose={() => setShowStatusModal(false)}
           onUpdate={handleUpdateStatus}
           updating={updatingStatus}
+        />
+      )}      {showStatusModal && (
+        <StatusModal
+          currentStatus={dissertation.status}
+          newStatus={newStatus}
+          setNewStatus={setNewStatus}
+          onClose={() => setShowStatusModal(false)}
+          onUpdate={handleUpdateStatus}
+          updating={updatingStatus}
+        />
+      )}
+
+      {showStudentCalendar && dissertation?.studentId && (
+        <TeacherStudentCalendar
+          dissertationId={dissertation._id}
+          studentName={dissertation.studentId?.name ? `${dissertation.studentId.name} ${dissertation.studentId.surname}` : 'Student'}
+          onClose={() => setShowStudentCalendar(false)}
         />
       )}
     </div>

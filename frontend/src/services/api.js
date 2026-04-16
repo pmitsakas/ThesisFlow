@@ -27,7 +27,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       const isLoginRequest = error.config?.url?.includes('/auth/login');
-      
+
       if (!isLoginRequest) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -51,10 +51,11 @@ export const userAPI = {
   update: (id, data) => api.put(`/users/${id}`, data),
   delete: (id) => api.delete(`/users/${id}`),
   getActiveTeachers: () => api.get('/users/active-teachers'),
-  
+
   getMyProfile: () => api.get('/users/profile'),
   updateMyProfile: (data) => api.put('/users/profile', data),
-  generateProposal: (track) => api.post('/users/generate-proposal', { track })
+  generateProposal: (track) => api.post('/users/generate-proposal', { track }),
+  completeOnboarding: () => api.patch('/users/complete-onboarding'),
 };
 
 export const dissertationAPI = {
@@ -77,13 +78,14 @@ export const dissertationAPI = {
 };
 
 export const applicationAPI = {
-  create: (data) => api.post('/applications', data),
+  create: (data, tier) => api.post('/applications', { ...data, tier }),
   getMyApplications: () => api.get('/applications/my-applications'),
   getPending: () => api.get('/applications/pending'),
   getByDissertation: (dissertationId) => api.get(`/applications/dissertation/${dissertationId}`),
   approve: (id) => api.patch(`/applications/${id}/approve`),
   reject: (id) => api.patch(`/applications/${id}/reject`),
   delete: (id) => api.delete(`/applications/${id}`),
+  bulkTier: (applications) => api.patch('/applications/bulk-tier', { applications }),
 };
 
 export const commentAPI = {
@@ -118,6 +120,15 @@ export const fileAPI = {
   }),
   download: (fileId) => api.get(`/files/download/${fileId}`, { responseType: 'blob' }),
   delete: (fileId) => api.delete(`/files/${fileId}`),
+};
+
+export const calendarAPI = {
+  getMyEvents: () => api.get('/calendar/my'),
+  getDissertationEvents: (dissertationId) => api.get(`/calendar/dissertation/${dissertationId}`),
+  createEvent: (data) => api.post('/calendar', data),
+  respondToEvent: (id, response) => api.patch(`/calendar/${id}/respond`, { response }),
+  completeEvent: (id) => api.patch(`/calendar/${id}/complete`),
+  deleteEvent: (id) => api.delete(`/calendar/${id}`),
 };
 
 export default api;

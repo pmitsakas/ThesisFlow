@@ -25,6 +25,22 @@ const applicationSchema = new mongoose.Schema({
     trim: true,
     maxlength: [500, 'Message must not exceed 500 characters']
   },
+  tier: {
+    type: Number,
+    required: false,
+    enum: {
+      values: [1, 2, 3],
+      message: 'Tier must be 1, 2, or 3'
+    }
+  },
+  position: {
+    type: Number,
+    required: false,
+    enum: {
+      values: [1, 2, 3],
+      message: 'Position must be 1, 2, or 3'
+    }
+  },
   created_at: {
     type: Date,
     default: Date.now
@@ -38,38 +54,40 @@ const applicationSchema = new mongoose.Schema({
 });
 
 applicationSchema.index({ dissertationId: 1, studentId: 1 }, { unique: true });
+applicationSchema.index({ studentId: 1, tier: 1, position: 1 }, { unique: true });
 applicationSchema.index({ studentId: 1, status: 1 });
 applicationSchema.index({ dissertationId: 1, status: 1 });
 
-applicationSchema.pre('save', async function(next) {
+applicationSchema.pre('save', async function (next) {
   if (this.isNew) {
     try {
       const User = mongoose.model('User');
       const Dissertation = mongoose.model('Dissertation');
-      
+
       const student = await User.findById(this.studentId);
       if (!student || student.role !== 'student') {
         return next(new Error('Invalid student'));
       }
-      
+
       const assignedDissertation = await Dissertation.findOne({
         studentId: this.studentId,
         status: 'assigned'
       });
-      
       if (assignedDissertation) {
         return next(new Error('Student already has an assigned dissertation'));
       }
-      
+
       const dissertation = await Dissertation.findById(this.dissertationId);
       if (!dissertation) {
         return next(new Error('Dissertation not found'));
       }
-      
-      if (dissertation.status !== 'available') {
+      const isOwnProposal = dissertation.status === 'pending_approval' &&
+        dissertation.studentId?.toString() === this.studentId.toString();
+
+      if (dissertation.status !== 'available' && !isOwnProposal) {
         return next(new Error('Dissertation is not available for applications'));
       }
-      
+
       next();
     } catch (error) {
       next(error);
@@ -79,7 +97,7 @@ applicationSchema.pre('save', async function(next) {
   }
 });
 
-applicationSchema.statics.findByStudent = function(studentId) {
+applicationSchema.statics.findByStudent = function (studentId) {
   return this.find({ studentId })
     .populate('dissertationId')
     .populate({
@@ -92,13 +110,13 @@ applicationSchema.statics.findByStudent = function(studentId) {
     .sort({ created_at: -1 });
 };
 
-applicationSchema.statics.findByDissertation = function(dissertationId) {
+applicationSchema.statics.findByDissertation = function (dissertationId) {
   return this.find({ dissertationId })
     .populate('studentId', 'name surname email')
     .sort({ created_at: -1 });
 };
 
-applicationSchema.statics.findPendingByTeacher = function(teacherId) {
+applicationSchema.statics.findPendingByTeacher = function (teacherId) {
   return this.find({ status: 'pending' })
     .populate({
       path: 'dissertationId',

@@ -35,6 +35,7 @@ const Navbar = () => {
                 >
                   Dashboard
                 </Link>
+                <Link to="/calendar">My Calendar</Link>
                 <NotificationBell />
                 <span className="text-gray-600 text-sm">
                   {user.name} {user.surname}

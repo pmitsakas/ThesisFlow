@@ -23,7 +23,10 @@ const Login = () => {
       if (response.data.success) {
         const { user, accessToken } = response.data.data;
         login(user, accessToken);
-        navigate('/dashboard');
+        const target = user.role === 'student' && !user.hasCompletedOnboarding
+          ? '/onboarding'
+          : '/dashboard';
+        navigate(target);
       }
     } catch (err) {
       console.error('Login error:', err);

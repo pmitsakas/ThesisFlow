@@ -16,6 +16,15 @@ const userSchema = new mongoose.Schema({
     minlength: [2, 'Surname must be at least 2 characters'],
     maxlength: [50, 'Surname must not exceed 50 characters']
   },
+  hasCompletedOnboarding: { type: Boolean, default: false },
+  track: {
+    type: String,
+    enum: {
+      values: ['AI&DS', 'WT', 'BI', ''],
+      message: 'Track must be AI&DS, WT, or BI'
+    },
+    default: ''
+  },
   email: {
     type: String,
     required: [true, 'Email is required'],
@@ -139,8 +148,6 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 };
 
 
-
-
 userSchema.methods.toPublicJSON = function () {
   return {
     _id: this._id,
@@ -149,9 +156,11 @@ userSchema.methods.toPublicJSON = function () {
     email: this.email,
     role: this.role,
     is_active: this.is_active,
+    hasCompletedOnboarding: this.hasCompletedOnboarding,
+    track: this.track,
     created_at: this.created_at,
     updated_at: this.updated_at,
-    studentProfile: this.studentProfile
+    studentProfile: this.studentProfile,
   };
 };
 

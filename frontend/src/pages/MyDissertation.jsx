@@ -252,9 +252,19 @@ const MyDissertation = () => {
 
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <span className="px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-800">
-                    {dissertation.track}
-                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {dissertation.tracks && dissertation.tracks.length > 0
+                      ? dissertation.tracks.map(t => (
+                          <span key={t} className={`px-3 py-1 text-sm font-semibold rounded-full ${
+                            t === 'AI&DS' ? 'bg-red-100 text-red-800' :
+                            t === 'WT' ? 'bg-blue-100 text-blue-800' :
+                            t === 'BI' ? 'bg-green-100 text-green-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>{t}</span>
+                        ))
+                      : <span className="px-3 py-1 text-sm font-semibold rounded-full bg-gray-100 text-gray-500">No track</span>
+                    }
+                  </div>
                   <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(dissertation.status)}`}>
                     {dissertation.status.toUpperCase()}
                   </span>

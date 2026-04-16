@@ -33,6 +33,13 @@ router.get(
 );
 
 router.patch(
+  '/bulk-tier',
+  protect,
+  isStudent,
+  applicationController.bulkTierApplications
+);
+
+router.patch(
   '/:id/approve',
   protect,
   isTeacherOrAdmin,

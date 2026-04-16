@@ -3,11 +3,20 @@ import { dissertationAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
+const TRACKS = ['AI&DS', 'WT', 'BI'];
+
+const TRACK_LABELS = {
+  'AI&DS': 'Artificial Intelligence & Data Science',
+  'WT': 'Web Technologies',
+  'BI': 'Business Informatics'
+};
+
 const CreateTopic = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    track: '',
+    code: '',
+    tracks: [],
     title: '',
     description: '',
     deadline: ''
@@ -15,22 +24,17 @@ const CreateTopic = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const tracks = [
-    'Computer Science',
-    'Software Engineering',
-    'Data Science',
-    'Artificial Intelligence',
-    'Cybersecurity',
-    'Information Systems',
-    'Computer Networks',
-    'Human-Computer Interaction'
-  ];
-
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const toggleTrack = (track) => {
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      tracks: prev.tracks.includes(track)
+        ? prev.tracks.filter(t => t !== track)
+        : [...prev.tracks, track]
     }));
   };
 
@@ -41,7 +45,8 @@ const CreateTopic = () => {
 
     try {
       const payload = {
-        track: formData.track,
+        code: formData.code,
+        tracks: formData.tracks,
         title: formData.title,
         description: formData.description || undefined,
         supervisorId: user._id,
@@ -58,7 +63,9 @@ const CreateTopic = () => {
   };
 
   const isFormValid = () => {
-    return formData.track && formData.title.length >= 10;
+    return formData.code.trim() &&
+      formData.tracks.length > 0 &&
+      formData.title.length >= 10;
   };
 
   return (
@@ -80,20 +87,45 @@ const CreateTopic = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Track <span className="text-red-500">*</span>
+                  Dissertation Code <span className="text-red-500">*</span>
                 </label>
-                <select
-                  name="track"
-                  value={formData.track}
+                <input
+                  type="text"
+                  name="code"
+                  value={formData.code}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="">Select a track</option>
-                  {tracks.map(track => (
-                    <option key={track} value={track}>{track}</option>
+                  placeholder="e.g. AI2025-001"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Unique identifier for this dissertation. Must be unique across all dissertations.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tracks <span className="text-red-500">*</span>
+                </label>
+                <div className="flex flex-wrap gap-3">
+                  {TRACKS.map(track => (
+                    <button
+                      key={track}
+                      type="button"
+                      onClick={() => toggleTrack(track)}
+                      className={`px-4 py-2 rounded-full border-2 text-sm font-semibold transition ${
+                        formData.tracks.includes(track)
+                          ? 'bg-blue-600 border-blue-600 text-white'
+                          : 'bg-white border-gray-300 text-gray-700 hover:border-blue-400'
+                      }`}
+                    >
+                      {track} - {TRACK_LABELS[track]}
+                    </button>
                   ))}
-                </select>
+                </div>
+                {formData.tracks.length === 0 && (
+                  <p className="mt-2 text-xs text-red-500">Please select at least one track</p>
+                )}
               </div>
 
               <div>
@@ -109,7 +141,7 @@ const CreateTopic = () => {
                   minLength="10"
                   maxLength="200"
                   placeholder="Enter a descriptive title for the dissertation..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   {formData.title.length}/200 characters (minimum 10)
@@ -125,12 +157,12 @@ const CreateTopic = () => {
                   value={formData.description}
                   onChange={handleChange}
                   rows="6"
-                  maxLength="2000"
+                  maxLength="3000"
                   placeholder="Provide a detailed description of the dissertation topic, objectives, methodology, and expected outcomes..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  {formData.description.length}/2000 characters
+                  {formData.description.length}/3000 characters
                 </p>
               </div>
 
@@ -144,7 +176,7 @@ const CreateTopic = () => {
                   value={formData.deadline}
                   onChange={handleChange}
                   min={new Date().toISOString().split('T')[0]}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   Set a deadline for this dissertation. Leave empty to use the system default.
@@ -162,6 +194,7 @@ const CreateTopic = () => {
                     <h3 className="text-sm font-medium text-blue-800">Tips for Creating Topics</h3>
                     <div className="mt-2 text-sm text-blue-700">
                       <ul className="list-disc list-inside space-y-1">
+                        <li>Use a clear, memorable code (e.g. AI2025-001)</li>
                         <li>Make the title clear and specific</li>
                         <li>Include research objectives and methodology in the description</li>
                         <li>Specify any prerequisites or required skills</li>
@@ -183,7 +216,7 @@ const CreateTopic = () => {
               </button>
               <button
                 type="submit"
-                disabled={!isFormValid() || loading }
+                disabled={!isFormValid() || loading}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
                 {loading ? 'Creating...' : 'Create Topic'}

@@ -79,11 +79,7 @@ const Dashboard = () => {
                 </h3>
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between py-3 border-b border-gray-200">
-                    <span className="text-sm font-medium text-gray-600">User ID</span>
-                    <span className="text-sm text-gray-900 font-mono">{user?._id}</span>
-                  </div>
-
+                
                   <div className="flex items-center justify-between py-3 border-b border-gray-200">
                     <span className="text-sm font-medium text-gray-600">Full Name</span>
                     <span className="text-sm text-gray-900">{user?.name} {user?.surname}</span>
@@ -108,11 +104,6 @@ const Dashboard = () => {
                     </span>
                   </div>
 
-                  {user?.role === 'teacher' && (
-                    <div className="flex items-center justify-between py-3 border-b border-gray-200">
-                      <span className="text-sm font-medium text-gray-600">Approval Status</span>
-                    </div>
-                  )}
 
                   <div className="flex items-center justify-between py-3">
                     <span className="text-sm font-medium text-gray-600">Member Since</span>

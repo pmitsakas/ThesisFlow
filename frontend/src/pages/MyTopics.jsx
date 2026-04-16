@@ -3,6 +3,20 @@ import { dissertationAPI, applicationAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
+const TRACKS = ['AI&DS', 'WT', 'BI'];
+
+const TRACK_LABELS = {
+  'AI&DS': 'Artificial Intelligence & Data Science',
+  'WT': 'Web Technologies',
+  'BI': 'Business Informatics'
+};
+
+const TRACK_COLORS = {
+  'AI&DS': 'bg-red-100 text-red-800',
+  'WT': 'bg-blue-100 text-blue-800',
+  'BI': 'bg-green-100 text-green-800'
+};
+
 const MyTopics = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -12,19 +26,7 @@ const MyTopics = () => {
   const [error, setError] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTrack, setSelectedTrack] = useState('all');
-
-  const tracks = [
-    'Computer Science',
-    'Software Engineering',
-    'Data Science',
-    'Artificial Intelligence',
-    'Cybersecurity',
-    'Information Systems',
-    'Computer Networks',
-    'Human-Computer Interaction'
-  ];
-
+  const [selectedTracks, setSelectedTracks] = useState([]);
   const [showApplicationsModal, setShowApplicationsModal] = useState(false);
   const [selectedDissertation, setSelectedDissertation] = useState(null);
 
@@ -51,17 +53,24 @@ const MyTopics = () => {
     }
   };
 
+  const toggleTrack = (track) => {
+    setSelectedTracks(prev =>
+      prev.includes(track) ? prev.filter(t => t !== track) : [...prev, track]
+    );
+  };
+
   const filteredDissertations = dissertations.filter(d => {
     if (filterStatus !== 'all' && d.status !== filterStatus) return false;
-    
-    if (selectedTrack !== 'all' && d.track !== selectedTrack) return false;
-    
+
+    if (selectedTracks.length > 0 && !(d.tracks && d.tracks.some(t => selectedTracks.includes(t)))) return false;
+
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       return d.title.toLowerCase().includes(searchLower) ||
-             d.description?.toLowerCase().includes(searchLower);
+        d.description?.toLowerCase().includes(searchLower) ||
+        d.code?.toLowerCase().includes(searchLower);
     }
-    
+
     return true;
   });
 
@@ -110,7 +119,7 @@ const MyTopics = () => {
           </div>
           <button
             onClick={() => navigate('/create-topic')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow-lg transition flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow-lg transition flex items-center"
           >
             <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -139,29 +148,16 @@ const MyTopics = () => {
         )}
 
         <div className="bg-white rounded-lg shadow-lg mb-6 p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by title or description..."
+                placeholder="Search by title, description or code..."
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Track</label>
-              <select
-                value={selectedTrack}
-                onChange={(e) => setSelectedTrack(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Tracks</option>
-                {tracks.map(track => (
-                  <option key={track} value={track}>{track}</option>
-                ))}
-              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Status</label>
@@ -179,6 +175,33 @@ const MyTopics = () => {
               </select>
             </div>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Track</label>
+            <div className="flex flex-wrap gap-2">
+              {TRACKS.map(track => (
+                <button
+                  key={track}
+                  type="button"
+                  onClick={() => toggleTrack(track)}
+                  className={`px-4 py-2 rounded-full border-2 text-sm font-semibold transition ${selectedTracks.includes(track)
+                      ? 'bg-blue-600 border-blue-600 text-white'
+                      : 'bg-white border-gray-300 text-gray-700 hover:border-blue-400'
+                    }`}
+                >
+                  {track} - {TRACK_LABELS[track]}
+                </button>
+              ))}
+              {selectedTracks.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedTracks([])}
+                  className="px-4 py-2 rounded-full border-2 border-red-300 text-red-600 text-sm font-semibold hover:bg-red-50 transition"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {dissertations.length === 0 ? (
@@ -190,7 +213,7 @@ const MyTopics = () => {
             <p className="text-gray-600 mb-6">Create your first dissertation topic to get started</p>
             <button
               onClick={() => navigate('/create-topic')}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition disabled:opacity-50"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition"
             >
               Create Topic
             </button>
@@ -247,10 +270,15 @@ const DissertationCard = ({ dissertation, applicationsCount, onViewApplications,
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                {dissertation.track}
-              </span>
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              {dissertation.tracks && dissertation.tracks.map(track => (
+                <span
+                  key={track}
+                  className={`px-3 py-1 text-xs font-semibold rounded-full ${TRACK_COLORS[track] || 'bg-gray-100 text-gray-800'}`}
+                >
+                  {track}
+                </span>
+              ))}
               <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(dissertation.status)}`}>
                 {dissertation.status.toUpperCase()}
               </span>
@@ -260,6 +288,9 @@ const DissertationCard = ({ dissertation, applicationsCount, onViewApplications,
                 </span>
               )}
             </div>
+            {dissertation.code && (
+              <p className="text-xs text-gray-500 font-mono mb-1">{dissertation.code}</p>
+            )}
             <h3 className="text-xl font-bold text-gray-900 mb-2">{dissertation.title}</h3>
             {dissertation.description && (
               <p className="text-gray-600 text-sm line-clamp-2">{dissertation.description}</p>
@@ -378,6 +409,9 @@ const ApplicationsModal = ({ dissertation, onClose, onSuccess }) => {
           <div className="flex justify-between items-start mb-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Applications</h2>
+              {dissertation.code && (
+                <p className="text-xs text-gray-500 font-mono mt-0.5">{dissertation.code}</p>
+              )}
               <p className="text-sm text-gray-600 mt-1">{dissertation.title}</p>
             </div>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -401,9 +435,19 @@ const ApplicationsModal = ({ dissertation, onClose, onSuccess }) => {
                 <div key={application._id} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <h3 className="font-semibold text-gray-900">
-                        {application.studentId.name} {application.studentId.surname}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-gray-900">
+                          {application.studentId.name} {application.studentId.surname}
+                        </h3>
+                        {application.tier && (
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${application.tier === 1 ? 'bg-yellow-100 text-yellow-800' :
+                              application.tier === 2 ? 'bg-blue-100 text-blue-800' :
+                                'bg-gray-100 text-gray-700'
+                            }`}>
+                            Tier {application.tier}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-600">{application.studentId.email}</p>
                     </div>
                     <span className="text-xs text-gray-500">

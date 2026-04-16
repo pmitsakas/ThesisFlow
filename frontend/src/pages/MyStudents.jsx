@@ -10,16 +10,7 @@ const MyStudents = () => {
   const [selectedTrack, setSelectedTrack] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('assigned');
 
-  const tracks = [
-    'Computer Science',
-    'Software Engineering',
-    'Data Science',
-    'Artificial Intelligence',
-    'Cybersecurity',
-    'Information Systems',
-    'Computer Networks',
-    'Human-Computer Interaction'
-  ];
+  const tracks = ['AI&DS', 'WT', 'BI'];
 
   useEffect(() => {
     fetchStudents();
@@ -42,7 +33,7 @@ const MyStudents = () => {
   const filteredDissertations = dissertations.filter(d => {
     if (selectedStatus !== 'all' && d.status !== selectedStatus) return false;
     
-    if (selectedTrack !== 'all' && d.track !== selectedTrack) return false;
+    if (selectedTrack !== 'all' && !(d.tracks && d.tracks.includes(selectedTrack))) return false;
     
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
@@ -254,9 +245,15 @@ const StudentCard = ({ dissertation, getStatusColor, getProgressColor, getDaysUn
 
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2">
-            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-              {dissertation.track}
-            </span>
+            <div className="flex flex-wrap gap-1">
+              {dissertation.tracks && dissertation.tracks.map(t => (
+                <span key={t} className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                  t === 'AI&DS' ? 'bg-red-100 text-red-800' :
+                  t === 'WT' ? 'bg-blue-100 text-blue-800' :
+                  'bg-green-100 text-green-800'
+                }`}>{t}</span>
+              ))}
+            </div>
           </div>
           <h4 className="font-semibold text-gray-900 text-sm line-clamp-2">{dissertation.title}</h4>
         </div>

@@ -6,6 +6,7 @@ const settingsController = require('./settingsController');
 const applicationController = require('./applicationController');
 const notificationController = require('./notificationController');
 const fileController = require('./fileController');
+const calendarController = require('./calendarController');
 
 module.exports = {
   authController,
@@ -15,5 +16,6 @@ module.exports = {
   settingsController,
   applicationController,
   notificationController,
-  fileController
+  fileController,
+  calendarController
 };

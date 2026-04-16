@@ -7,6 +7,7 @@ const {
   isTeacherOrAdmin,
   isStudent,
   validateDissertationCreate,
+  validateProposalCreate,
   validateDissertationUpdate,
   validateAssignDissertation,
   validateUpdateStatus,
@@ -51,7 +52,7 @@ router.post(
   '/propose',
   protect,
   isStudent,
-  validateDissertationCreate,
+  validateProposalCreate,
   dissertationController.createStudentProposal
 );
 

@@ -1,22 +1,22 @@
 const mongoose = require('mongoose');
 
+const VALID_TRACKS = ['AI&DS', 'WT', 'BI'];
+
 const dissertationSchema = new mongoose.Schema({
-  track: {
+  code: {
     type: String,
-    required: [true, 'Track is required'],
-    trim: true,
-    enum: {
-      values: [
-        'Computer Science',
-        'Software Engineering',
-        'Data Science',
-        'Artificial Intelligence',
-        'Cybersecurity',
-        'Information Systems',
-        'Computer Networks',
-        'Human-Computer Interaction'
-      ],
-      message: 'Please select a valid track'
+    required: [true, 'Dissertation code is required'],
+    unique: true,
+    trim: true
+  },
+  tracks: {
+    type: [String],
+    required: [true, 'At least one track is required'],
+    validate: {
+      validator: function(arr) {
+        return arr && arr.length > 0 && arr.every(t => VALID_TRACKS.includes(t));
+      },
+      message: 'Please select valid tracks'
     }
   },
   title: {
@@ -91,11 +91,10 @@ const dissertationSchema = new mongoose.Schema({
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
 
-// Indexes for performance and uniqueness
 dissertationSchema.index({ supervisorId: 1 });
 dissertationSchema.index({ studentId: 1 });
 dissertationSchema.index({ status: 1 });
-dissertationSchema.index({ track: 1 });
+dissertationSchema.index({ tracks: 1 });
 dissertationSchema.index({ deadline: 1 });
 
 dissertationSchema.index(
@@ -126,15 +125,15 @@ dissertationSchema.pre('save', async function(next) {
     try {
       const User = mongoose.model('User');
       const supervisor = await User.findById(this.supervisorId);
-      
+
       if (!supervisor) {
         return next(new Error('Supervisor not found'));
       }
-      
+
       if (supervisor.role !== 'teacher') {
         return next(new Error('Supervisor must be a teacher'));
       }
-      
+
       next();
     } catch (error) {
       next(error);
@@ -144,33 +143,32 @@ dissertationSchema.pre('save', async function(next) {
   }
 });
 
-
 dissertationSchema.pre('save', async function(next) {
   if (this.isModified('studentId') && this.studentId) {
     try {
       const User = mongoose.model('User');
       const student = await User.findById(this.studentId);
-      
+
       if (!student) {
         return next(new Error('Student not found'));
       }
-      
+
       if (student.role !== 'student') {
         return next(new Error('Assigned user must be a student'));
       }
-      
+
       if (this.status === 'assigned') {
         const existingAssignment = await this.constructor.findOne({
           studentId: this.studentId,
           status: 'assigned',
           _id: { $ne: this._id }
         });
-        
+
         if (existingAssignment) {
           return next(new Error('Student already has an assigned dissertation'));
         }
       }
-      
+
       next();
     } catch (error) {
       next(error);
@@ -182,41 +180,40 @@ dissertationSchema.pre('save', async function(next) {
 
 dissertationSchema.methods.isValidStatusTransition = function(newStatus) {
   const currentStatus = this.status;
-  
+
   const validTransitions = {
     'available': ['assigned', 'canceled', 'pending_approval'],
     'pending_approval': ['available', 'canceled'],
     'assigned': ['completed', 'paused', 'canceled'],
     'paused': ['assigned', 'completed', 'canceled'],
-    'completed': [], 
-    'canceled': [] 
+    'completed': [],
+    'canceled': []
   };
-  
+
   return validTransitions[currentStatus]?.includes(newStatus) || false;
 };
-
 
 dissertationSchema.methods.assignToStudent = async function(studentId) {
   const User = mongoose.model('User');
   const student = await User.findById(studentId);
-  
+
   if (!student || student.role !== 'student') {
     throw new Error('Invalid student');
   }
-  
+
   const existingAssignment = await this.constructor.findOne({
     studentId: studentId,
     status: 'assigned'
   });
-  
+
   if (existingAssignment) {
     throw new Error('Student already has an assigned dissertation');
   }
-  
+
   this.studentId = studentId;
   this.status = 'assigned';
   this.date_started = new Date();
-  
+
   return this.save();
 };
 
@@ -240,7 +237,7 @@ dissertationSchema.statics.findByStudent = function(studentId) {
 dissertationSchema.statics.findApproachingDeadlines = function(daysThreshold = 14) {
   const thresholdDate = new Date();
   thresholdDate.setDate(thresholdDate.getDate() + daysThreshold);
-  
+
   return this.find({
     status: 'assigned',
     deadline: {
@@ -248,7 +245,7 @@ dissertationSchema.statics.findApproachingDeadlines = function(daysThreshold = 1
       $gte: new Date()
     }
   })
-  .populate('studentId supervisorId', 'name surname email');
+    .populate('studentId supervisorId', 'name surname email');
 };
 
 const Dissertation = mongoose.model('Dissertation', dissertationSchema);

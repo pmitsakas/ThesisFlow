@@ -7,16 +7,6 @@ exports.createApplication = async (req, res) => {
     const { dissertationId, message } = req.body;
     const studentId = req.user.userId;
 
-    if (!dissertationId) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'MISSING_FIELDS',
-          message: 'Dissertation ID is required'
-        }
-      });
-    }
-
     const existingApplication = await Application.findOne({
       dissertationId,
       studentId
@@ -59,7 +49,6 @@ exports.createApplication = async (req, res) => {
       studentId,
       message
     });
-
     const populatedApplication = await Application.findById(application._id)
       .populate('dissertationId')
       .populate({
@@ -97,6 +86,7 @@ exports.createApplication = async (req, res) => {
         }
       });
     }
+
 
     res.status(500).json({
       success: false,
@@ -449,6 +439,67 @@ exports.deleteApplication = async (req, res) => {
         code: 'SERVER_ERROR',
         message: 'An error occurred while deleting application'
       }
+    });
+  }
+
+
+};
+
+exports.bulkTierApplications = async (req, res) => {
+  try {
+    const studentId = req.user.userId;
+    const { applications } = req.body;
+
+    if (!applications || !Array.isArray(applications) || applications.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'MISSING_DATA', message: 'Applications array is required' }
+      });
+    }
+
+    const tierPositionMap = {};
+    for (const item of applications) {
+      const key = `${item.tier}-${item.position}`;
+      if (tierPositionMap[key]) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'DUPLICATE_POSITION', message: `Duplicate tier/position: Tier ${item.tier} Position ${item.position}` }
+        });
+      }
+      tierPositionMap[key] = true;
+    }
+
+    const tierCounts = {};
+    for (const item of applications) {
+      tierCounts[item.tier] = (tierCounts[item.tier] || 0) + 1;
+      if (tierCounts[item.tier] > 3) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'TIER_OVERFLOW', message: `Tier ${item.tier} has more than 3 applications` }
+        });
+      }
+    }
+
+    const updates = applications.map(item =>
+      Application.findOneAndUpdate(
+        { _id: item.applicationId, studentId },
+        { tier: item.tier, position: item.position },
+        { new: true }
+      )
+    );
+
+    await Promise.all(updates);
+
+    res.status(200).json({
+      success: true,
+      message: 'Tiers assigned successfully'
+    });
+
+  } catch (error) {
+    console.error('Bulk tier error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'SERVER_ERROR', message: 'An error occurred while assigning tiers' }
     });
   }
 };

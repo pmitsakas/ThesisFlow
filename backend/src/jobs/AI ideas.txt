@@ -1,0 +1,25 @@
+1. Smart Topic Matching (Υψηλή αξία)
+Όταν ο φοιτητής συμπληρώνει το profile του (interests, skills, researchAreas), το μοντέλο να αναλύει τα διαθέσιμα dissertations και να του επιστρέφει ranked λίστα με εξήγηση γιατί ταιριάζει το καθένα.
+Input: studentProfile + available dissertations[]
+Output: [{dissertationId, matchScore, reasoning}]
+Αυτό είναι genuinely χρήσιμο — το έχεις ήδη στο BrowseTopics.jsx και το GET /dissertations/available.
+
+2. Proposal Review Assistant (Πολύ εντυπωσιακό)
+Όταν ο καθηγητής βλέπει μια πρόταση φοιτητή στο PendingProposals.jsx, ένα κουμπί "AI Review" να του δίνει:
+
+Αξιολόγηση της πρότασης (clarity, feasibility, scope)
+Προτεινόμενες βελτιώσεις
+Ερωτήσεις που πρέπει να κάνει στον φοιτητή
+
+
+3. Progress Summary Generator
+Ο καθηγητής στο MyStudents.jsx βλέπει progress % και comments. Το AI να συνοψίζει την πρόγρεσσο βάσει των comments που έχουν ανταλλαχθεί και να παράγει ένα short status report.
+Input: dissertation + comments[] + progress_percentage
+Output: "Ο φοιτητής φαίνεται να έχει ολοκληρώσει τη θεωρητική μελέτη, 
+         αλλά η υλοποίηση έχει καθυστερήσει βάσει των τελευταίων σχολίων..."
+
+4. Comment Assistant (Για φοιτητές)
+Στο MyDissertation.jsx όπου ο φοιτητής γράφει comment στον supervisor, ένα "Help me write this" που παίρνει rough notes και παράγει επαγγελματικά διατυπωμένο μήνυμα.
+
+5. Deadline Risk Predictor
+Βάσει του progress_percentage, των CalendarEvents, και των ημερών που απομένουν μέχρι deadline, το AI να εκτιμά αν το dissertation είναι on track και να δίνει σύσταση.

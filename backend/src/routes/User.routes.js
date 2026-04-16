@@ -30,6 +30,13 @@ router.put(
   userController.updateMyProfile
 );
 
+router.patch(
+  '/complete-onboarding',           
+  protect,
+  isStudent,
+  userController.completeOnboarding
+);
+
 router.post(
   '/generate-proposal',
   protect,
@@ -83,6 +90,22 @@ router.patch(
   isAdmin,
   validateMongoId,
   userController.deactivateUser
+);
+
+router.patch(
+  '/:id/approve',
+  protect,
+  isAdmin,
+  validateMongoId,
+  userController.approveTeacher
+);
+
+router.patch(
+  '/:id/activate',
+  protect,
+  isAdmin,
+  validateMongoId,
+  userController.activateUser
 );
 
 module.exports = router;

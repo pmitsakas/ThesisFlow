@@ -415,7 +415,7 @@ exports.getMyProfile = async (req, res) => {
 
 exports.updateMyProfile = async (req, res) => {
   try {
-    const { studentProfile } = req.body;
+    const { studentProfile, track } = req.body;
 
     const user = await User.findById(req.user._id);
 
@@ -446,6 +446,10 @@ exports.updateMyProfile = async (req, res) => {
       };
     }
 
+    if (track !== undefined) {
+      user.track = track;
+    }
+
     await user.save();
 
     res.status(200).json({
@@ -474,6 +478,63 @@ exports.updateMyProfile = async (req, res) => {
       error: {
         code: 'SERVER_ERROR',
         message: 'An error occurred while updating profile'
+      }
+    });
+  }
+};
+
+exports.completeOnboarding = async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.user.userId, { hasCompletedOnboarding: true });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { code: 'SERVER_ERROR', message: 'Failed to complete onboarding' } });
+  }
+};
+
+
+exports.approveTeacher = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'USER_NOT_FOUND',
+          message: 'User not found'
+        }
+      });
+    }
+
+    if (user.role !== 'teacher') {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'NOT_A_TEACHER',
+          message: 'User is not a teacher'
+        }
+      });
+    }
+
+    user.is_approved = true;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      data: user.toPublicJSON(),
+      message: 'Teacher approved successfully'
+    });
+
+  } catch (error) {
+    console.error('Approve teacher error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'SERVER_ERROR',
+        message: 'An error occurred while approving teacher'
       }
     });
   }

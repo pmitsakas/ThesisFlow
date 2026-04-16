@@ -42,10 +42,19 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
     localStorage.setItem('token', token);
-    
+
     if (userData.role === 'student') {
       checkActiveDissertation();
     }
+  };
+
+  const refreshUser = async () => {
+    try {
+      const response = await userAPI.getMyProfile();
+      const updated = response.data.data;
+      setUser(updated);
+      localStorage.setItem('user', JSON.stringify(updated));
+    } catch { }
   };
 
   const logout = () => {
@@ -59,6 +68,7 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     logout,
+    refreshUser,
     isAuthenticated: !!user,
     loading,
     hasActiveDissertation,

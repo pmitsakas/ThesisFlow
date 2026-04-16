@@ -2,13 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { dissertationAPI, userAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { FiZap, FiLoader } from 'react-icons/fi';
+import { FiZap, FiLoader, FiInfo, FiX } from 'react-icons/fi';
+
+const TRACK_LABELS = {
+  'AI&DS': 'Artificial Intelligence & Data Science',
+  'WT': 'Web Technologies',
+  'BI': 'Business Informatics'
+};
 
 const ProposeTopic = () => {
   const { user, hasActiveDissertation } = useAuth();
+  const studentTrack = user?.track || '';
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
-    track: '',
+    tracks: studentTrack ? [studentTrack] : [],
     title: '',
     description: '',
     supervisorId: '',
@@ -19,17 +27,8 @@ const ProposeTopic = () => {
   const [generatingAI, setGeneratingAI] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
-  const tracks = [
-    'Computer Science',
-    'Software Engineering',
-    'Data Science',
-    'Artificial Intelligence',
-    'Cybersecurity',
-    'Information Systems',
-    'Computer Networks',
-    'Human-Computer Interaction'
-  ];
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
     fetchTeachers();
@@ -46,59 +45,28 @@ const ProposeTopic = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleGenerateWithAI = async () => {
-    if (!formData.track) {
-      setError('Please select a track first to generate AI proposal');
-      return;
-    }
-
     setGeneratingAI(true);
     setError('');
     setSuccess('');
-
     try {
-      const response = await userAPI.generateProposal(formData.track);
+      const response = await userAPI.generateProposal(studentTrack);
       const aiProposal = response.data.data;
-
-      console.log('=== FRONTEND: AI Proposal Received ===');
-      console.log('Full response:', response.data);
-      console.log('AI Proposal data:', aiProposal);
-      console.log('Title:', aiProposal.title);
-      console.log('Description:', aiProposal.description);
-      console.log('Deadline:', aiProposal.suggestedDeadline);
-      console.log('====================================');
-
       setFormData(prev => ({
         ...prev,
         title: aiProposal.title || '',
         description: aiProposal.description || '',
         deadline: aiProposal.suggestedDeadline || ''
       }));
-
-      console.log('=== FRONTEND: Form data after update ===');
-      console.log('New formData will be:', {
-        ...formData,
-        title: aiProposal.title || '',
-        description: aiProposal.description || '',
-        deadline: aiProposal.suggestedDeadline || ''
-      });
-      console.log('====================================');
-
       setSuccess('AI proposal generated successfully! You can edit the fields before submitting.');
     } catch (err) {
       const errorMessage = err.response?.data?.error?.message || 'Failed to generate AI proposal';
       setError(errorMessage);
-
       if (errorMessage.includes('profile')) {
-        setTimeout(() => {
-          navigate('/profile');
-        }, 2000);
+        setTimeout(() => navigate('/student/profile'), 2000);
       }
     } finally {
       setGeneratingAI(false);
@@ -110,28 +78,18 @@ const ProposeTopic = () => {
     setLoading(true);
     setError('');
     setSuccess('');
-
     try {
       const payload = {
-        track: formData.track,
+        tracks: formData.tracks,
         title: formData.title,
         supervisorId: formData.supervisorId
       };
-
-      if (formData.description && formData.description.trim()) {
-        payload.description = formData.description;
-      }
-
-      if (formData.deadline && formData.deadline.trim()) {
-        payload.deadline = formData.deadline;
-      }
+      if (formData.description?.trim()) payload.description = formData.description;
+      if (formData.deadline?.trim()) payload.deadline = formData.deadline;
 
       await dissertationAPI.propose(payload);
       setSuccess('Proposal submitted successfully! Waiting for teacher approval.');
-
-      setTimeout(() => {
-        navigate('/my-proposals');
-      }, 2000);
+      setTimeout(() => navigate('/my-proposals'), 2000);
     } catch (err) {
       setError(err.response?.data?.error?.message || 'Failed to submit proposal');
     } finally {
@@ -139,13 +97,12 @@ const ProposeTopic = () => {
     }
   };
 
-  const isFormValid = () => {
-    return formData.track &&
-      formData.title.length >= 10 &&
-      formData.title.length <= 200 &&
-      formData.description.length <= 3000 &&
-      formData.supervisorId;
-  };
+  const isFormValid = () =>
+    formData.tracks.length > 0 &&
+    formData.title.length >= 10 &&
+    formData.title.length <= 200 &&
+    formData.description.length <= 3000 &&
+    formData.supervisorId;
 
   if (hasActiveDissertation) {
     return (
@@ -182,6 +139,7 @@ const ProposeTopic = () => {
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <form onSubmit={handleSubmit}>
             <div className="p-6 space-y-6">
+
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-start">
                   <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
@@ -201,39 +159,34 @@ const ProposeTopic = () => {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Track <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="track"
-                  value={formData.track}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select a track</option>
-                  {tracks.map(track => (
-                    <option key={track} value={track}>{track}</option>
-                  ))}
-                </select>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Track</label>
+                <span className="inline-block px-4 py-2 rounded-full border-2 text-sm font-semibold bg-blue-600 border-blue-600 text-white">
+                  {studentTrack} - {TRACK_LABELS[studentTrack]}
+                </span>
               </div>
 
               <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center mb-2">
-                      <FiZap className="w-5 h-5 text-purple-600 mr-2" />
-                      <h3 className="text-sm font-semibold text-purple-900">AI-Powered Proposal Generator</h3>
-                    </div>
-                    <p className="text-xs text-purple-700 mb-3">
-                      Let AI create a personalized dissertation proposal based on your student profile and selected track.
-                    </p>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center">
+                    <FiZap className="w-5 h-5 text-purple-600 mr-2" />
+                    <h3 className="text-sm font-semibold text-purple-900">AI-Powered Proposal Generator</h3>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowInfoModal(true)}
+                    className="text-purple-400 hover:text-purple-600 transition"
+                    title="How does this work?"
+                  >
+                    <FiInfo className="w-5 h-5" />
+                  </button>
                 </div>
+                <p className="text-xs text-purple-700 mb-3">
+                  Let AI create a personalized dissertation proposal based on your student profile and track.
+                </p>
                 <button
                   type="button"
                   onClick={handleGenerateWithAI}
-                  disabled={!formData.track || generatingAI}
+                  disabled={generatingAI}
                   className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium flex items-center justify-center"
                 >
                   {generatingAI ? (
@@ -248,11 +201,6 @@ const ProposeTopic = () => {
                     </>
                   )}
                 </button>
-                {!formData.track && (
-                  <p className="text-xs text-purple-600 mt-2 text-center">
-                    Please select a track first
-                  </p>
-                )}
               </div>
 
               <div>
@@ -270,15 +218,11 @@ const ProposeTopic = () => {
                   placeholder="Enter a descriptive title for your proposal..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  {formData.title.length}/200 characters (minimum 10)
-                </p>
+                <p className="mt-1 text-xs text-gray-500">{formData.title.length}/200 characters (minimum 10)</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                 <textarea
                   name="description"
                   value={formData.description}
@@ -288,9 +232,7 @@ const ProposeTopic = () => {
                   placeholder="Describe your proposed dissertation topic, objectives, methodology, and expected outcomes..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  {formData.description.length}/3000 characters
-                </p>
+                <p className="mt-1 text-xs text-gray-500">{formData.description.length}/3000 characters</p>
               </div>
 
               <div>
@@ -311,9 +253,7 @@ const ProposeTopic = () => {
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-xs text-gray-500">
-                  Choose the teacher you would like to supervise your dissertation
-                </p>
+                <p className="mt-1 text-xs text-gray-500">Choose the teacher you would like to supervise your dissertation</p>
               </div>
 
               <div>
@@ -328,9 +268,7 @@ const ProposeTopic = () => {
                   min={new Date().toISOString().split('T')[0]}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  Suggest a deadline for your dissertation
-                </p>
+                <p className="mt-1 text-xs text-gray-500">Suggest a deadline for your dissertation</p>
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -342,17 +280,15 @@ const ProposeTopic = () => {
                   </div>
                   <div className="ml-3">
                     <h3 className="text-sm font-medium text-blue-800">Important Information</h3>
-                    <div className="mt-2 text-sm text-blue-700">
-                      <ul className="list-disc list-inside space-y-1">
-                        <li>Your proposal will be sent to the selected supervisor for review</li>
-                        <li>If approved, the dissertation will be automatically assigned to you</li>
-                        <li>You can only have one active proposal or dissertation at a time</li>
-                        <li>Make sure to provide a clear and detailed description</li>
-                      </ul>
+                    <div className="mt-2 text-sm text-blue-700 space-y-1">
+                      <p>Your proposal will be sent to the selected supervisor for review.</p>
+                      <p>If approved, the dissertation will be automatically assigned to you.</p>
+                      <p>You can only have one active proposal or dissertation at a time.</p>
                     </div>
                   </div>
                 </div>
               </div>
+
             </div>
 
             <div className="bg-gray-50 px-6 py-4 flex justify-between items-center border-t border-gray-200">
@@ -374,6 +310,90 @@ const ProposeTopic = () => {
           </form>
         </div>
       </div>
+
+      {showInfoModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-lg w-full shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center">
+                <FiZap className="w-5 h-5 text-purple-600 mr-2" />
+                <h2 className="text-lg font-bold text-gray-900">How AI Proposal Generation Works</h2>
+              </div>
+              <button
+                onClick={() => { setShowInfoModal(false); setShowPrompt(false); }}
+                className="text-gray-400 hover:text-gray-600 transition"
+              >
+                <FiX className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-5 overflow-y-auto">
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold text-sm">1</div>
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-1">Reads your student profile</h3>
+                  <p className="text-sm text-gray-600">The AI uses the information from your profile, interests, skills, programming languages, research areas and career goals to understand what kind of dissertation suits you best.</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm">2</div>
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-1">Uses your track</h3>
+                  <p className="text-sm text-gray-600">The proposal is tailored specifically to your track (<span className="font-semibold">{studentTrack} - {TRACK_LABELS[studentTrack]}</span>), ensuring the topic is relevant to your academic specialization.</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-sm">3</div>
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-1">Generates a complete proposal</h3>
+                  <p className="text-sm text-gray-600">The system produces a title, a detailed description and a suggested deadline. You can edit all of these before submitting to your supervisor.</p>
+                </div>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-sm text-amber-800 font-semibold mb-1">💡 Get better results</p>
+                <p className="text-sm text-amber-700">The more complete your student profile is, the more accurate and personalized the AI proposal will be. Visit your <span className="font-semibold">Profile</span> page to update your interests, skills and research preferences.</p>
+              </div>
+
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowPrompt(prev => !prev)}
+                  className="text-xs text-gray-400 hover:text-gray-600 underline transition"
+                >
+                  {showPrompt ? 'Hide prompt' : 'See prompt'}
+                </button>
+                {showPrompt && (
+                  <div className="mt-2 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <p className="text-xs text-gray-500 font-mono leading-relaxed whitespace-pre-wrap">
+                      {`You are an academic dissertation advisor. Based on the following student profile, generate a dissertation proposal tailored to the "${studentTrack}" track.
+Student Profile:
+- Interests: {interests}
+- Skills: {skills}
+- Programming Languages: {programmingLanguages}
+- Research Areas: {researchAreas}
+- Career Goals: {careerGoals}
+- Preferred Methodology: {researchMethodology}
+- Difficulty Level: {difficultyLevel}
+
+Generate a JSON response with:
+- title: a clear, academic dissertation title
+- description: a detailed proposal (objectives, methodology, expected outcomes)
+- suggestedDeadline: a realistic ISO date`}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="px-6 pb-6">
+              <button
+                onClick={() => { setShowInfoModal(false); setShowPrompt(false); }}
+                className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
