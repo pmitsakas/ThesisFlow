@@ -3,10 +3,8 @@ const userController = require('./userController');
 const dissertationController = require('./dissertationController');
 const commentController = require('./commentController');
 const settingsController = require('./settingsController');
-const applicationController = require('./applicationController');
 const notificationController = require('./notificationController');
 const fileController = require('./fileController');
-const calendarController = require('./calendarController');
 
 module.exports = {
   authController,
@@ -14,8 +12,6 @@ module.exports = {
   dissertationController,
   commentController,
   settingsController,
-  applicationController,
   notificationController,
-  fileController,
-  calendarController
+  fileController
 };

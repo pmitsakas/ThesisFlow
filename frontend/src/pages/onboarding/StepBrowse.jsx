@@ -101,7 +101,6 @@ const StepBrowse = ({
           <FiArrowLeft className="w-4 h-4" /> Πίσω
         </button>
         <div className="flex gap-3">
-          <button onClick={onSkip} className="text-sm text-gray-400 hover:text-gray-600 transition">Παράλειψη</button>
           <button
             onClick={onSubmit}
             disabled={selectedDissertations.length !== maxSelections || submitting}

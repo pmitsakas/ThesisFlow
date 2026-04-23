@@ -17,18 +17,14 @@ const {
   dissertationRoutes,
   commentRoutes,
   settingsRoutes,
-  applicationRoutes,
   notificationRoutes,
   fileRoutes,
-  calendarRoutes
 } = require('./routes');
-const { startReminderJob } = require('./jobs/reminderJob');
 
 
 const app = express();
 
 connectDB();
-startReminderJob();
 
 app.use(helmet());
 
@@ -74,10 +70,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/dissertations', dissertationRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/settings', settingsRoutes);
-app.use('/api/applications', applicationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/files', fileRoutes);
-app.use('/api/calendar', calendarRoutes);
 
 app.use(notFound);
 

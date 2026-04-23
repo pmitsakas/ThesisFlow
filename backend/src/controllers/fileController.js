@@ -1,5 +1,7 @@
 const File = require('../models/File');
 const Dissertation = require('../models/Dissertation');
+const User = require('../models/User');
+const { sendNewFileEmail } = require('../services/emailService');
 const path = require('path');
 const fs = require('fs');
 
@@ -120,6 +122,23 @@ exports.uploadFile = async (req, res) => {
     res.status(201).json({
       success: true,
       data: populatedFile
+    });
+
+    setImmediate(async () => {
+      try {
+        const uploader = await User.findById(userId).select('name surname');
+        const uploaderName = `${uploader.name} ${uploader.surname}`;
+        const isSup = dissertation.supervisorId.toString() === userId.toString();
+        if (isSup && dissertation.studentId) {
+          const student = await User.findById(dissertation.studentId).select('name email');
+          if (student) await sendNewFileEmail(student.email, student.name, uploaderName, dissertation.title, dissertationId, req.file.originalname);
+        } else if (!isSup) {
+          const supervisor = await User.findById(dissertation.supervisorId).select('name email');
+          if (supervisor) await sendNewFileEmail(supervisor.email, supervisor.name, uploaderName, dissertation.title, dissertationId, req.file.originalname);
+        }
+      } catch (e) {
+        console.error('Email send error (file):', e);
+      }
     });
 
   } catch (error) {

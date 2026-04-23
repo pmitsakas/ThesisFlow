@@ -136,7 +136,7 @@ const ProposalCard = ({ proposal, onApprove, onReject, isProcessing }) => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pt-4 border-t border-gray-200">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pt-4 border-t border-gray-200">
           <div className="flex items-center text-sm text-gray-600">
             <FiUser className="w-4 h-4 mr-2 text-gray-400" />
             <div>
@@ -147,22 +147,6 @@ const ProposalCard = ({ proposal, onApprove, onReject, isProcessing }) => {
               <p className="text-xs text-gray-500">{proposal.studentId?.email}</p>
             </div>
           </div>
-
-          {proposal.deadline && (
-            <div className="flex items-center text-sm text-gray-600">
-              <FiCalendar className="w-4 h-4 mr-2 text-gray-400" />
-              <div>
-                <p className="text-xs text-gray-500">Proposed Deadline</p>
-                <p className="font-medium text-gray-900">
-                  {new Date(proposal.deadline).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </p>
-              </div>
-            </div>
-          )}
 
           <div className="flex items-center text-sm text-gray-600">
             <FiClock className="w-4 h-4 mr-2 text-gray-400" />

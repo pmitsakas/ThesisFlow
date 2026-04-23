@@ -3,10 +3,8 @@ const userRoutes = require('./user.routes');
 const dissertationRoutes = require('./Dissertation.routes');
 const commentRoutes = require('./comment.routes');
 const settingsRoutes = require('./settings.routes');
-const applicationRoutes = require('./application.routes');
 const notificationRoutes = require('./notification.routes');
 const fileRoutes = require('./file.routes');
-const calendarRoutes = require('./calendar.routes');
 
 
 module.exports = {
@@ -15,8 +13,6 @@ module.exports = {
   dissertationRoutes,
   commentRoutes,
   settingsRoutes,
-  applicationRoutes,
   notificationRoutes,
-  fileRoutes,
-  calendarRoutes
+  fileRoutes
 };

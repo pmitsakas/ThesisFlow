@@ -1,5 +1,7 @@
 const Comment = require('../models/Comment');
 const Dissertation = require('../models/Dissertation');
+const User = require('../models/User');
+const { sendNewCommentEmail } = require('../services/emailService');
 
 exports.getCommentsByDissertation = async (req, res) => {
   try {
@@ -115,6 +117,23 @@ exports.createComment = async (req, res) => {
     res.status(201).json({
       success: true,
       data: populatedComment
+    });
+
+    setImmediate(async () => {
+      try {
+        const commenter = await User.findById(userId).select('name surname');
+        const commenterName = `${commenter.name} ${commenter.surname}`;
+        const isSup = dissertation.supervisorId.toString() === userId.toString();
+        if (isSup && dissertation.studentId) {
+          const student = await User.findById(dissertation.studentId).select('name email');
+          if (student) await sendNewCommentEmail(student.email, student.name, commenterName, dissertation.title, dissertationId);
+        } else if (!isSup) {
+          const supervisor = await User.findById(dissertation.supervisorId).select('name email');
+          if (supervisor) await sendNewCommentEmail(supervisor.email, supervisor.name, commenterName, dissertation.title, dissertationId);
+        }
+      } catch (e) {
+        console.error('Email send error (comment):', e);
+      }
     });
 
   } catch (error) {

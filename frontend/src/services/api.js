@@ -60,7 +60,6 @@ export const userAPI = {
 
 export const dissertationAPI = {
   getAll: () => api.get('/dissertations'),
-  getAvailable: () => api.get('/dissertations/available'),
   getMyDissertations: () => api.get('/dissertations/my-dissertations'),
   getById: (id) => api.get(`/dissertations/${id}`),
   create: (data) => api.post('/dissertations', data),
@@ -78,7 +77,6 @@ export const dissertationAPI = {
 };
 
 export const applicationAPI = {
-  create: (data, tier) => api.post('/applications', { ...data, tier }),
   getMyApplications: () => api.get('/applications/my-applications'),
   getPending: () => api.get('/applications/pending'),
   getByDissertation: (dissertationId) => api.get(`/applications/dissertation/${dissertationId}`),
@@ -123,7 +121,6 @@ export const fileAPI = {
 };
 
 export const calendarAPI = {
-  getMyEvents: () => api.get('/calendar/my'),
   getDissertationEvents: (dissertationId) => api.get(`/calendar/dissertation/${dissertationId}`),
   createEvent: (data) => api.post('/calendar', data),
   respondToEvent: (id, response) => api.patch(`/calendar/${id}/respond`, { response }),

@@ -217,12 +217,6 @@ const MyDissertation = () => {
             </svg>
             <h3 className="text-xl font-medium text-gray-900 mb-2">No Active Dissertation</h3>
             <p className="text-gray-600 mb-6">You don't have an assigned dissertation yet.</p>
-            <a
-              href="/browse-topics"
-              className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition"
-            >
-              Browse Available Topics
-            </a>
           </div>
         </div>
       </div>

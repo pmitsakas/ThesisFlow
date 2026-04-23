@@ -8,18 +8,14 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/UserManagement';
 import SystemSettings from './pages/SystemSettings';
-import BrowseTopics from './pages/BrowseTopics';
 import MyDissertation from './pages/MyDissertation';
 import CreateTopic from './pages/CreateTopic';
-import MyTopics from './pages/MyTopics';
 import MyStudents from './pages/MyStudents';
 import DissertationDetails from './pages/DissertationDetails';
-import MyProposals from './pages/MyProposals';
-import ProposeTopic from './pages/ProposeTopic';
 import PendingProposals from './pages/PendingProposals';
 import StudentProfile from './pages/student/StudentProfile';
-import StudentCalendar from './pages/StudentCalendar';
-import Onboarding from './pages/onboarding';
+import MyProposals from './pages/MyProposals';
+import Onboarding from './pages/onboarding/index';
 
 function App() {
   return (
@@ -30,6 +26,14 @@ function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
+            <Route
+              path="/onboarding"
+              element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <Onboarding />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/dashboard"
               element={
@@ -54,14 +58,16 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
             <Route
-              path="/browse-topics"
+              path="/my-proposals"
               element={
                 <ProtectedRoute allowedRoles={['student']}>
-                  <BrowseTopics />
+                  <MyProposals />
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/my-dissertation"
               element={
@@ -87,14 +93,6 @@ function App() {
               }
             />
             <Route
-              path="/my-topics"
-              element={
-                <ProtectedRoute allowedRoles={['teacher']}>
-                  <MyTopics />
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/my-students"
               element={
                 <ProtectedRoute allowedRoles={['teacher']}>
@@ -111,42 +109,10 @@ function App() {
               }
             />
             <Route
-              path="/my-proposals"
-              element={
-                <ProtectedRoute allowedRoles={['student']}>
-                  <MyProposals />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/propose-topic"
-              element={
-                <ProtectedRoute allowedRoles={['student']}>
-                  <ProposeTopic />
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/pending-proposals"
               element={
                 <ProtectedRoute allowedRoles={['teacher']}>
                   <PendingProposals />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/calendar"
-              element={
-                <ProtectedRoute allowedRoles={['student']}>
-                  <StudentCalendar />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/onboarding"
-              element={
-                <ProtectedRoute allowedRoles={['student']}>
-                  <Onboarding />
                 </ProtectedRoute>
               }
             />

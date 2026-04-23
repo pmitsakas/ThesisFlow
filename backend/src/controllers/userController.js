@@ -3,11 +3,11 @@ const User = require('../models/User');
 exports.getAllUsers = async (req, res) => {
   try {
     const { role, is_active } = req.query;
-    
+
     const filter = {};
     if (role) filter.role = role;
     if (is_active !== undefined) filter.is_active = is_active === 'true';
-    
+
     const users = await User.find(filter).sort({ created_at: -1 });
 
     res.status(200).json({
@@ -51,7 +51,7 @@ exports.getUserById = async (req, res) => {
 
   } catch (error) {
     console.error('Get user by ID error:', error);
-    
+
     if (error.name === 'CastError') {
       return res.status(400).json({
         success: false,
@@ -431,18 +431,8 @@ exports.updateMyProfile = async (req, res) => {
 
     if (studentProfile) {
       user.studentProfile = {
-        interests: studentProfile.interests || [],
-        preferredTopics: studentProfile.preferredTopics || [],
-        skills: studentProfile.skills || [],
-        programmingLanguages: studentProfile.programmingLanguages || [],
-        careerGoals: studentProfile.careerGoals || '',
-        previousExperience: studentProfile.previousExperience || '',
-        researchMethodology: studentProfile.researchMethodology || '',
-        weeklyHours: studentProfile.weeklyHours || 10,
-        difficultyLevel: studentProfile.difficultyLevel || '',
-        coreCoursesFavorites: studentProfile.coreCoursesFavorites || [],
-        advancedTopicsInterest: studentProfile.advancedTopicsInterest || [],
-        researchAreas: studentProfile.researchAreas || []
+        ...user.studentProfile.toObject(),
+        ...studentProfile
       };
     }
 
@@ -519,7 +509,6 @@ exports.approveTeacher = async (req, res) => {
       });
     }
 
-    user.is_approved = true;
     await user.save();
 
     res.status(200).json({

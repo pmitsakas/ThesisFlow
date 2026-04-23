@@ -2,13 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { dissertationAPI, commentAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { FiArrowLeft, FiUser, FiCalendar, FiClock, FiTrendingUp } from 'react-icons/fi';
+import { FiArrowLeft, FiUser, FiClock, FiTrendingUp, FiCalendar } from 'react-icons/fi';
 import { fileAPI } from '../services/api';
 import FileCard from '../components/FileCard';
 import FileUploader from '../components/FileUploader';
 import { getFileIcon } from '../utils/fileHelpers.jsx';
 import { FiFile } from 'react-icons/fi';
-import TeacherStudentCalendar from './TeacherStudentCalendar';
 
 const DissertationDetails = () => {
   const { id } = useParams();
@@ -19,7 +18,6 @@ const DissertationDetails = () => {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showStudentCalendar, setShowStudentCalendar] = useState(false);
 
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
@@ -311,13 +309,6 @@ const DissertationDetails = () => {
                           </button>
 
                         )}
-                        <button
-                          onClick={() => setShowStudentCalendar(true)}
-                          className="mt-3 w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition text-sm"
-                        >
-                          <FiCalendar className="w-4 h-4" />
-                          View Student's Calendar
-                        </button>
                       </div>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
@@ -552,15 +543,6 @@ const DissertationDetails = () => {
                     </div>
                   </div>
                 </div>
-                {dissertation?.studentId && (
-                  <button
-                    onClick={() => setShowStudentCalendar(true)}
-                    className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition text-sm"
-                  >
-                    <FiCalendar className="w-4 h-4" />
-                    View Student's Calendar
-                  </button>
-                )}
               </div>
             )}
           </div>
@@ -587,23 +569,6 @@ const DissertationDetails = () => {
           onClose={() => setShowStatusModal(false)}
           onUpdate={handleUpdateStatus}
           updating={updatingStatus}
-        />
-      )}      {showStatusModal && (
-        <StatusModal
-          currentStatus={dissertation.status}
-          newStatus={newStatus}
-          setNewStatus={setNewStatus}
-          onClose={() => setShowStatusModal(false)}
-          onUpdate={handleUpdateStatus}
-          updating={updatingStatus}
-        />
-      )}
-
-      {showStudentCalendar && dissertation?.studentId && (
-        <TeacherStudentCalendar
-          dissertationId={dissertation._id}
-          studentName={dissertation.studentId?.name ? `${dissertation.studentId.name} ${dissertation.studentId.surname}` : 'Student'}
-          onClose={() => setShowStudentCalendar(false)}
         />
       )}
     </div>

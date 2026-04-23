@@ -113,9 +113,6 @@ exports.validateProposalCreate = [
   body('supervisorId')
     .notEmpty().withMessage('Supervisor ID is required')
     .isMongoId().withMessage('Invalid supervisor ID'),
-  body('deadline')
-    .optional()
-    .isISO8601().withMessage('Deadline must be a valid date'),
   handleValidationErrors
 ];
 

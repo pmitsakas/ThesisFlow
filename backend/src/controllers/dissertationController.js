@@ -1,6 +1,6 @@
 const Dissertation = require('../models/Dissertation');
 const User = require('../models/User');
-const Application = require('../models/Application');
+const { sendProposalApprovedEmail, sendProposalRejectedEmail } = require('../services/emailService');
 const Notification = require('../models/Notification');
 
 exports.getAllDissertations = async (req, res) => {
@@ -30,28 +30,6 @@ exports.getAllDissertations = async (req, res) => {
       error: {
         code: 'SERVER_ERROR',
         message: 'An error occurred while fetching dissertations'
-      }
-    });
-  }
-};
-
-exports.getAvailableDissertations = async (req, res) => {
-  try {
-    const dissertations = await Dissertation.findAvailable();
-
-    res.status(200).json({
-      success: true,
-      count: dissertations.length,
-      data: dissertations
-    });
-
-  } catch (error) {
-    console.error('Get available dissertations error:', error);
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'SERVER_ERROR',
-        message: 'An error occurred while fetching available dissertations'
       }
     });
   }
@@ -151,15 +129,13 @@ exports.createDissertation = async (req, res) => {
     }
 
     const dissertationData = {
-      code: `PROP-${studentId}-${Date.now()}`,
-      tracks: tracks && tracks.length > 0 ? tracks : [student.track],
+      code: code.trim(),
+      tracks,
       title,
       description,
       supervisorId,
-      studentId,
-      status: 'pending_approval'
+      status: 'available'
     };
-
     if (deadline) {
       dissertationData.deadline = deadline;
     }
@@ -317,23 +293,6 @@ exports.deleteDissertation = async (req, res) => {
       });
     }
 
-    const pendingApplications = await Application.find({
-      dissertationId: id,
-      status: 'pending'
-    }).populate('studentId');
-
-    for (const app of pendingApplications) {
-      await Notification.createNotification({
-        userId: app.studentId._id,
-        type: 'dissertation_deleted',
-        title: 'Dissertation Deleted',
-        message: `The dissertation "${dissertation.title}" you applied for has been deleted by the supervisor.`,
-        relatedId: dissertation._id,
-        relatedModel: 'Dissertation'
-      });
-    }
-
-    await Application.deleteMany({ dissertationId: id });
     await Dissertation.findByIdAndDelete(id);
 
     res.status(200).json({
@@ -749,7 +708,7 @@ exports.createStudentProposal = async (req, res) => {
 
     const dissertationData = {
       code: `PROP-${studentId}-${Date.now()}`,
-      tracks: tracks && tracks.length > 0 ? tracks : [student.track],
+      tracks: tracks && tracks.length > 0 ? tracks : [],
       title,
       description,
       supervisorId,
@@ -767,11 +726,12 @@ exports.createStudentProposal = async (req, res) => {
       .populate('supervisorId', 'name surname email')
       .populate('studentId', 'name surname email');
 
+    const student = await User.findById(studentId).select('name surname');
     await Notification.createNotification({
       userId: supervisorId,
       type: 'proposal_received',
       title: 'New Dissertation Proposal',
-      message: `${supervisor.name} ${supervisor.surname} has proposed a new dissertation: "${title}"`,
+      message: `${student.name} ${student.surname} has proposed a new dissertation: "${title}"`,
       relatedId: dissertation._id,
       relatedModel: 'Dissertation'
     });
@@ -911,11 +871,6 @@ exports.approveProposal = async (req, res) => {
     dissertation.date_started = new Date();
     await dissertation.save();
 
-    await Application.deleteMany({
-      studentId: studentObjectId,
-      status: 'pending'
-    });
-
     await Dissertation.deleteMany({
       studentId: studentObjectId,
       status: 'pending_approval',
@@ -930,6 +885,15 @@ exports.approveProposal = async (req, res) => {
       relatedId: dissertation._id,
       relatedModel: 'Dissertation'
     });
+
+    try {
+      const student = await User.findById(studentObjectId);
+      if (student) {
+        await sendProposalApprovedEmail(student.email, student.name, dissertation.title);
+      }
+    } catch (emailError) {
+      console.error('Email send error (approve):', emailError);
+    }
 
     res.status(200).json({
       success: true,
@@ -1003,6 +967,15 @@ exports.rejectProposal = async (req, res) => {
         relatedId: dissertation._id,
         relatedModel: 'Dissertation'
       });
+
+      try {
+        const student = await User.findById(studentObjectId);
+        if (student) {
+          await sendProposalRejectedEmail(student.email, student.name, dissertation.title);
+        }
+      } catch (emailError) {
+        console.error('Email send error (reject):', emailError);
+      }
     }
 
     await Dissertation.findByIdAndDelete(id);

@@ -1,112 +1,128 @@
 import React, { useState, useEffect } from 'react';
 import { userAPI } from '../../services/api';
-import { 
-  FiUser, 
-  FiCode, 
-  FiTarget, 
-  FiBriefcase, 
-  FiClock,
-  FiTrendingUp,
-  FiSave,
-  FiLoader,
-  FiBookOpen,
-  FiCheckCircle // Προσθήκη εικονιδίου για το Toast
-} from 'react-icons/fi';
+import { FiUser, FiSave, FiLoader, FiCheckCircle, FiArrowLeft, FiArrowRight } from 'react-icons/fi';
 import profileQuestions from '../../config/profileQuestions.json';
 
+const INTERESTS = profileQuestions.advancedTopics;
+const LANGUAGES = profileQuestions.programmingLanguages;
+const MAX_INTERESTS = 5;
+
+const SUB_STEPS = [
+  { id: 1, title: 'Τι σε ενδιαφέρει;', subtitle: 'Επέλεξε μέχρι 5 θέματα που σε ενδιαφέρουν περισσότερο' },
+  { id: 2, title: 'Εργαλεία & Γλώσσες', subtitle: 'Τι εργαλεία γνωρίζεις και σε ποιο επίπεδο;' },
+  { id: 3, title: 'Στυλ εργασίας', subtitle: 'Τι είδος project προτιμάς;' },
+  { id: 4, title: 'Στόχοι', subtitle: 'Προαιρετικά — βοηθά το AI να σου κάνει καλύτερη πρόταση' },
+];
+
+const PROJECT_STYLES = [
+  { value: 'theoretical', icon: '📚', title: 'Research', desc: 'Θεωρητική ανάλυση, papers, αλγόριθμοι' },
+  { value: 'practical',   icon: '⚙️', title: 'Practical', desc: 'Ανάπτυξη λογισμικού, υλοποίηση συστημάτων' },
+  { value: 'mixed',       icon: '🔀', title: 'Hybrid', desc: 'Συνδυασμός θεωρίας και πράξης' },
+];
+
+const DIFFICULTY_OPTIONS = [
+  { value: 'beginner',     label: 'Beginner',     desc: 'Βασισμένο στη γνώση των μαθημάτων' },
+  { value: 'intermediate', label: 'Intermediate', desc: 'Εξερεύνηση νέων τεχνολογιών' },
+  { value: 'advanced',     label: 'Advanced',     desc: 'Cutting-edge έρευνα & καινοτομία' },
+];
+
+const Chip = ({ label, selected, onClick, disabled }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={disabled && !selected}
+    className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-150 ${
+      selected
+        ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+        : disabled
+        ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
+        : 'bg-white border-gray-300 text-gray-700 hover:border-purple-400 hover:text-blue-600'
+    }`}
+  >
+    {label}
+  </button>
+);
+
+const SubStepDots = ({ total, current }) => (
+  <div className="flex items-center justify-center gap-2 mb-8">
+    {Array.from({ length: total }).map((_, i) => (
+      <div
+        key={i}
+        className={`rounded-full transition-all duration-300 ${
+          i + 1 === current ? 'w-6 h-2 bg-blue-600' :
+          i + 1 < current  ? 'w-2 h-2 bg-blue-300' :
+                             'w-2 h-2 bg-gray-200'
+        }`}
+      />
+    ))}
+  </div>
+);
+
 const StudentProfile = () => {
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [loading, setLoading]   = useState(true);
+  const [saving, setSaving]     = useState(false);
+  const [success, setSuccess]   = useState('');
+  const [error, setError]       = useState('');
+  const [subStep, setSubStep]   = useState(1);
 
   const [profile, setProfile] = useState({
-    interests: [],
-    preferredTopics: [],
-    skills: [],
-    programmingLanguages: [],
-    careerGoals: '',
-    previousExperience: '',
-    researchMethodology: '',
-    weeklyHours: 10,
-    difficultyLevel: '',
-    coreCoursesFavorites: [],
     advancedTopicsInterest: [],
-    researchAreas: []
+    programmingLanguages: [],
+    difficultyLevel: '',
+    researchMethodology: '',
+    careerGoals: '',
   });
 
   useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await userAPI.getMyProfile();
+        const sp = res.data.data.studentProfile;
+        if (sp) {
+          setProfile({
+            advancedTopicsInterest: sp.advancedTopicsInterest || [],
+            programmingLanguages:   sp.programmingLanguages   || [],
+            difficultyLevel:        sp.difficultyLevel        || '',
+            researchMethodology:    sp.researchMethodology    || '',
+            careerGoals:            sp.careerGoals            || '',
+          });
+        }
+      } catch {
+        setError('Failed to load profile');
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchProfile();
   }, []);
 
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      const response = await userAPI.getMyProfile();
-      
-      if (response.data.data.studentProfile) {
-        setProfile({
-          interests: response.data.data.studentProfile.interests || [],
-          preferredTopics: response.data.data.studentProfile.preferredTopics || [],
-          skills: response.data.data.studentProfile.skills || [],
-          programmingLanguages: response.data.data.studentProfile.programmingLanguages || [],
-          careerGoals: response.data.data.studentProfile.careerGoals || '',
-          previousExperience: response.data.data.studentProfile.previousExperience || '',
-          researchMethodology: response.data.data.studentProfile.researchMethodology || '',
-          weeklyHours: response.data.data.studentProfile.weeklyHours || 10,
-          difficultyLevel: response.data.data.studentProfile.difficultyLevel || '',
-          coreCoursesFavorites: response.data.data.studentProfile.coreCoursesFavorites || [],
-          advancedTopicsInterest: response.data.data.studentProfile.advancedTopicsInterest || [],
-          researchAreas: response.data.data.studentProfile.researchAreas || []
-        });
-      }
-    } catch (err) {
-      setError('Failed to load profile');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleArrayChange = (field, value) => {
+  const toggleArray = (field, value) => {
     setProfile(prev => ({
       ...prev,
       [field]: prev[field].includes(value)
-        ? prev[field].filter(item => item !== value)
+        ? prev[field].filter(i => i !== value)
         : [...prev[field], value]
     }));
   };
 
-  const handleInputChange = (field, value) => {
-    setProfile(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+  const setField = (field, value) => setProfile(prev => ({ ...prev, [field]: value }));
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
+  const handleSave = async () => {
+    setSaving(true);
+    setError('');
     try {
-      setSaving(true);
-      setError('');
-      setSuccess('');
-
       await userAPI.updateMyProfile({ studentProfile: profile });
-
-      // Το μήνυμα θα εμφανιστεί στο Toast
-      setSuccess('Profile updated successfully!');
-      
-      // Εξαφάνιση μετά από 4 δευτερόλεπτα
+      setSuccess('Το προφίλ αποθηκεύτηκε!');
       setTimeout(() => setSuccess(''), 4000);
-
     } catch (err) {
       setError(err.response?.data?.error?.message || 'Failed to update profile');
-      console.error(err);
     } finally {
       setSaving(false);
     }
   };
+
+  const isLastStep = subStep === SUB_STEPS.length;
+  const interestsMax = profile.advancedTopicsInterest.length >= MAX_INTERESTS;
 
   if (loading) {
     return (
@@ -117,364 +133,165 @@ const StudentProfile = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6 relative">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-          <FiUser className="text-blue-600" />
-          Student Academic Profile
-        </h1>
-        <p className="text-gray-600 mt-2">
-          Complete your academic profile to receive AI-powered personalized dissertation topic suggestions based on your interests and the curriculum
-        </p>
+    <div className="max-w-2xl mx-auto px-4 py-10 relative">
+      <div className="mb-6 flex items-center gap-3">
+        <FiUser className="text-blue-600 w-7 h-7" />
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Το προφίλ μου</h1>
+          <p className="text-sm text-gray-500">Ενημέρωσε το προφίλ σου για καλύτερες AI προτάσεις</p>
+        </div>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-          {error}
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">{error}</div>
+      )}
+
+      <SubStepDots total={SUB_STEPS.length} current={subStep} />
+
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-1">{SUB_STEPS[subStep - 1].title}</h2>
+        <p className="text-gray-500 text-sm">{SUB_STEPS[subStep - 1].subtitle}</p>
+      </div>
+
+      {subStep === 1 && (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm text-gray-500">Επιλεγμένα: {profile.advancedTopicsInterest.length}/{MAX_INTERESTS}</span>
+            {profile.advancedTopicsInterest.length > 0 && (
+              <button type="button" onClick={() => setField('advancedTopicsInterest', [])} className="text-xs text-red-500 hover:text-red-700">
+                Καθαρισμός
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {INTERESTS.map(interest => (
+              <Chip
+                key={interest}
+                label={interest}
+                selected={profile.advancedTopicsInterest.includes(interest)}
+                onClick={() => toggleArray('advancedTopicsInterest', interest)}
+                disabled={interestsMax}
+              />
+            ))}
+          </div>
         </div>
       )}
 
-      {/* ΣΗΜΕΙΩΣΗ: Αφαιρέθηκε το στατικό success message από εδώ */}
-
-      <form onSubmit={handleSubmit} className="space-y-8">
-        
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <FiBookOpen className="text-blue-600" />
-            Favorite Core Courses
-          </h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Select the courses you enjoyed most or found most interesting from your core curriculum
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {profileQuestions.coreCourses.map(course => (
-              <label key={course} className="flex items-center gap-2 p-3 hover:bg-blue-50 rounded cursor-pointer border border-transparent hover:border-blue-200 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={profile.coreCoursesFavorites.includes(course)}
-                  onChange={() => handleArrayChange('coreCoursesFavorites', course)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+      {subStep === 2 && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Γλώσσες προγραμματισμού</h3>
+            <div className="flex flex-wrap gap-2">
+              {LANGUAGES.map(lang => (
+                <Chip
+                  key={lang}
+                  label={lang}
+                  selected={profile.programmingLanguages.includes(lang)}
+                  onClick={() => toggleArray('programmingLanguages', lang)}
                 />
-                <span className="text-sm text-gray-700">{course}</span>
-              </label>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <FiTarget className="text-blue-600" />
-            Advanced Topics & Specializations
-          </h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Which advanced topics would you like to explore in your dissertation?
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {profileQuestions.advancedTopics.map(topic => (
-              <label key={topic} className="flex items-center gap-2 p-3 hover:bg-purple-50 rounded cursor-pointer border border-transparent hover:border-purple-200 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={profile.advancedTopicsInterest.includes(topic)}
-                  onChange={() => handleArrayChange('advancedTopicsInterest', topic)}
-                  className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
-                />
-                <span className="text-sm text-gray-700">{topic}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <FiTrendingUp className="text-blue-600" />
-            Research Areas of Interest
-          </h2>
-          <p className="text-sm text-gray-600 mb-4">
-            What type of research would you prefer for your dissertation?
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {profileQuestions.researchAreas.map(area => (
-              <label key={area} className="flex items-center gap-2 p-3 hover:bg-green-50 rounded cursor-pointer border border-transparent hover:border-green-200 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={profile.researchAreas.includes(area)}
-                  onChange={() => handleArrayChange('researchAreas', area)}
-                  className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
-                />
-                <span className="text-sm text-gray-700">{area}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* --- Section for General Interests --- */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <FiTarget className="text-blue-600" />
-            General Academic Interests
-          </h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Add general academic interests (e.g., Artificial Intelligence, Cloud Computing). 
-            Press <span className="font-bold">Enter</span> to add.
-          </p>
-          
-          <input
-            type="text"
-            placeholder="Type an interest and press Enter..."
-            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                const value = e.target.value.trim();
-                if (value && !profile.interests.includes(value)) {
-                  handleInputChange('interests', [...profile.interests, value]);
-                  e.target.value = '';
-                }
-              }
-            }}
-          />
-          
-          <div className="flex flex-wrap gap-2 mt-3">
-            {profile.interests.map(interest => (
-              <span
-                key={interest}
-                className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
-              >
-                {interest}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Επίπεδο γνώσης</h3>
+            <div className="grid grid-cols-3 gap-3">
+              {DIFFICULTY_OPTIONS.map(opt => (
                 <button
+                  key={opt.value}
                   type="button"
-                  onClick={() => handleInputChange('interests', profile.interests.filter(i => i !== interest))}
-                  className="text-blue-600 hover:text-blue-800 font-bold"
+                  onClick={() => setField('difficultyLevel', opt.value)}
+                  className={`p-4 rounded-xl border-2 text-left transition-all duration-150 ${
+                    profile.difficultyLevel === opt.value
+                      ? 'border-blue-600 bg-blue-50'
+                      : 'border-gray-200 hover:border-blue-300'
+                  }`}
                 >
-                  ×
+                  <p className={`font-semibold text-sm ${profile.difficultyLevel === opt.value ? 'text-blue-700' : 'text-gray-800'}`}>{opt.label}</p>
+                  <p className="text-xs text-gray-500 mt-1">{opt.desc}</p>
                 </button>
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <FiCode className="text-blue-600" />
-            Programming Languages & Technical Skills
-          </h2>
-          
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Programming Languages (Proficient)
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {profileQuestions.programmingLanguages.map(lang => (
-                  <label key={lang} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={profile.programmingLanguages.includes(lang)}
-                      onChange={() => handleArrayChange('programmingLanguages', lang)}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">{lang}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Technical Skills & Expertise
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {profileQuestions.technicalSkills.map(skill => (
-                  <label key={skill} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={profile.skills.includes(skill)}
-                      onChange={() => handleArrayChange('skills', skill)}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">{skill}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Additional Topics of Interest
-                <span className="text-xs text-gray-500 ml-2">(Press Enter to add custom topics)</span>
-              </label>
-              <input
-                type="text"
-                placeholder="e.g., Blockchain, IoT, Quantum Computing..."
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const value = e.target.value.trim();
-                    if (value && !profile.preferredTopics.includes(value)) {
-                      handleInputChange('preferredTopics', [...profile.preferredTopics, value]);
-                      e.target.value = '';
-                    }
-                  }
-                }}
-              />
-              <div className="flex flex-wrap gap-2 mt-3">
-                {profile.preferredTopics.map(topic => (
-                  <span
-                    key={topic}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
-                  >
-                    {topic}
-                    <button
-                      type="button"
-                      onClick={() => handleInputChange('preferredTopics', profile.preferredTopics.filter(t => t !== topic))}
-                      className="text-blue-600 hover:text-blue-800 font-bold"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
         </div>
+      )}
 
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <FiBriefcase className="text-blue-600" />
-            Career Goals & Experience
-          </h2>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Career Goals & Aspirations
-              </label>
-              <textarea
-                value={profile.careerGoals}
-                onChange={(e) => handleInputChange('careerGoals', e.target.value)}
-                placeholder="What are your career aspirations? (e.g., Software Engineer, Data Scientist, AI Researcher, Cybersecurity Expert, Startup Founder, Academic Researcher...)"
-                rows="3"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Previous Projects & Experience
-              </label>
-              <textarea
-                value={profile.previousExperience}
-                onChange={(e) => handleInputChange('previousExperience', e.target.value)}
-                placeholder="Describe any relevant projects, internships, hackathons, or work experience you've had during your studies..."
-                rows="4"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <FiTrendingUp className="text-blue-600" />
-            Dissertation Preferences
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Research Methodology Preference
-              </label>
-              <select
-                value={profile.researchMethodology}
-                onChange={(e) => handleInputChange('researchMethodology', e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Select methodology</option>
-                {profileQuestions.researchMethodologies.map(method => (
-                  <option key={method.value} value={method.value}>
-                    {method.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Challenge Level Preference
-              </label>
-              <select
-                value={profile.difficultyLevel}
-                onChange={(e) => handleInputChange('difficultyLevel', e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Select difficulty level</option>
-                {profileQuestions.difficultyLevels.map(level => (
-                  <option key={level.value} value={level.value}>
-                    {level.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <FiClock />
-                Available Hours per Week for Dissertation: <span className="font-bold text-blue-600">{profile.weeklyHours} hours</span>
-              </label>
-              <input
-                type="range"
-                min="5"
-                max="40"
-                step="5"
-                value={profile.weeklyHours}
-                onChange={(e) => handleInputChange('weeklyHours', parseInt(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>5 hrs/week</span>
-                <span>20 hrs/week</span>
-                <span>40 hrs/week</span>
+      {subStep === 3 && (
+        <div className="space-y-4">
+          {PROJECT_STYLES.map(style => (
+            <button
+              key={style.value}
+              type="button"
+              onClick={() => setField('researchMethodology', style.value)}
+              className={`w-full p-5 rounded-2xl border-2 text-left transition-all duration-150 flex items-center gap-4 ${
+                profile.researchMethodology === style.value
+                  ? 'border-blue-600 bg-blue-50 shadow-sm'
+                  : 'border-gray-200 bg-white hover:border-blue-300'
+              }`}
+            >
+              <span className="text-3xl">{style.icon}</span>
+              <div>
+                <p className={`font-semibold text-base ${profile.researchMethodology === style.value ? 'text-blue-700' : 'text-gray-800'}`}>{style.title}</p>
+                <p className="text-sm text-gray-500 mt-0.5">{style.desc}</p>
               </div>
-            </div>
-          </div>
+              {profile.researchMethodology === style.value && (
+                <div className="ml-auto w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+            </button>
+          ))}
         </div>
+      )}
 
-        <div className="flex justify-end gap-4 sticky bottom-6 bg-white p-4 rounded-lg shadow-lg border border-gray-200 z-10">
+      {subStep === 4 && (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Στόχοι</label>
+          <textarea
+            value={profile.careerGoals}
+            onChange={e => setField('careerGoals', e.target.value)}
+            rows={5}
+            placeholder="π.χ. Software Engineer, Data Scientist, AI Researcher..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          />
+        </div>
+      )}
+
+      <div className="flex items-center justify-between mt-8">
+        <button
+          type="button"
+          onClick={() => setSubStep(s => s - 1)}
+          disabled={subStep === 1}
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition disabled:opacity-0"
+        >
+          <FiArrowLeft className="w-4 h-4" /> Πίσω
+        </button>
+
+        {isLastStep ? (
           <button
-            type="submit"
+            type="button"
+            onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-semibold shadow-md"
+            className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium shadow-sm transition disabled:opacity-50"
           >
-            {saving ? (
-              <>
-                <FiLoader className="animate-spin" />
-                Saving Profile...
-              </>
-            ) : (
-              <>
-                <FiSave />
-                Save Profile
-              </>
-            )}
+            {saving ? <><FiLoader className="w-4 h-4 animate-spin" /> Αποθήκευση...</> : <><FiSave className="w-4 h-4" /> Αποθήκευση</>}
           </button>
-        </div>
-      </form>
-
-      <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-sm text-blue-800">
-          💡 <strong>Tip:</strong> The more detailed your profile, the better AI-generated dissertation proposals you'll receive!
-        </p>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setSubStep(s => s + 1)}
+            className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium shadow-sm transition"
+          >
+            Συνέχεια <FiArrowRight className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
-      {/* --- Android Style Toast Notification --- */}
       {success && (
-        <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 z-50 animate-bounce-in transition-all duration-300 border border-gray-700">
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 z-50 border border-gray-700">
           <FiCheckCircle className="text-green-400 text-xl" />
-          <span className="font-medium text-sm md:text-base">{success}</span>
+          <span className="font-medium text-sm">{success}</span>
         </div>
       )}
     </div>

@@ -24,12 +24,6 @@ router.get(
 );
 
 router.get(
-  '/available',
-  protect,
-  dissertationController.getAvailableDissertations
-);
-
-router.get(
   '/my-dissertations',
   protect,
   dissertationController.getMyDissertations

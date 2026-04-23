@@ -79,7 +79,7 @@ const Dashboard = () => {
                 </h3>
 
                 <div className="space-y-4">
-                
+
                   <div className="flex items-center justify-between py-3 border-b border-gray-200">
                     <span className="text-sm font-medium text-gray-600">Full Name</span>
                     <span className="text-sm text-gray-900">{user?.name} {user?.surname}</span>
@@ -142,72 +142,30 @@ const Dashboard = () => {
               <div className="space-y-3">
                 {user?.role === 'student' && (
                   <>
-                    {hasActiveDissertation ? (
-                      <>
-                        <div className="relative">
-                          <div className="w-full text-left px-4 py-3 bg-gray-100 rounded-lg flex items-center justify-between opacity-60 cursor-not-allowed">
-                            <div className="flex items-center">
-                              <FiLock className="h-5 w-5 text-gray-400 mr-3" />
-                              <div>
-                                <span className="text-sm font-medium text-gray-500">Browse Topics</span>
-                                <p className="text-xs text-gray-400 mt-0.5">You already have an assigned dissertation</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="relative">
-                          <div className="w-full text-left px-4 py-3 bg-gray-100 rounded-lg flex items-center justify-between opacity-60 cursor-not-allowed">
-                            <div className="flex items-center">
-                              <FiLock className="h-5 w-5 text-gray-400 mr-3" />
-                              <div>
-                                <span className="text-sm font-medium text-gray-500">Propose Topic</span>
-                                <p className="text-xs text-gray-400 mt-0.5">You already have an assigned dissertation</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <a
-                          href="/student/profile"
-                          className="w-full text-left px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition flex items-center"
-                        >
-                          <FiUser className="h-5 w-5 text-blue-600 mr-3" />
-                          <span className="text-sm font-medium text-gray-700">My Profile</span>
-                        </a>
-                        <a
-                          href="/browse-topics"
-                          className="w-full text-left px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition flex items-center"
-                        >
-                          <FiSearch className="h-5 w-5 text-blue-600 mr-3" />
-                          <span className="text-sm font-medium text-gray-700">Browse Topics</span>
-                        </a>
-                        <a
-                          href="/propose-topic"
-                          className="w-full text-left px-4 py-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition flex items-center"
-                        >
-                          <FiPlus className="h-5 w-5 text-purple-600 mr-3" />
-                          <span className="text-sm font-medium text-gray-700">Propose Topic</span>
-                        </a>
-                      </>
-                    )}
-                    {!hasActiveDissertation &&
+                    <a
+                      href="/student/profile"
+                      className="w-full text-left px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition flex items-center"
+                    >
+                      <FiUser className="h-5 w-5 text-blue-600 mr-3" />
+                      <span className="text-sm font-medium text-gray-700">My Profile</span>
+                    </a>
+                    {hasActiveDissertation && (
                       <a
-                        href="/my-proposals"
-                        className="w-full text-left px-4 py-3 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition flex items-center"
+                        href="/my-dissertation"
+                        className="w-full text-left px-4 py-3 bg-green-50 hover:bg-green-100 rounded-lg transition flex items-center"
                       >
-                        <FiFileText className="h-5 w-5 text-indigo-600 mr-3" />
+                        <FiFileText className="h-5 w-5 text-green-600 mr-3" />
+                        <span className="text-sm font-medium text-gray-700">My Dissertation</span>
+                      </a>
+                    )}
+                    {!hasActiveDissertation && (
+                      <a href="/my-proposals"
+                        className="w-full text-left px-4 py-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition flex items-center"
+                      >
+                        <FiFileText className="h-5 w-5 text-purple-600 mr-3" />
                         <span className="text-sm font-medium text-gray-700">My Proposals</span>
                       </a>
-                    }
-                    <a
-                      href="/my-dissertation"
-                      className="w-full text-left px-4 py-3 bg-green-50 hover:bg-green-100 rounded-lg transition flex items-center"
-                    >
-                      <FiFileText className="h-5 w-5 text-green-600 mr-3" />
-                      <span className="text-sm font-medium text-gray-700">My Dissertation</span>
-                    </a>
+                    )}
 
                   </>
 
@@ -235,13 +193,6 @@ const Dashboard = () => {
                     >
                       <FiUsers className="h-5 w-5 text-green-600 mr-3" />
                       <span className="text-sm font-medium text-gray-700">My Students</span>
-                    </a>
-                    <a
-                      href="/my-topics"
-                      className="w-full text-left px-4 py-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition flex items-center"
-                    >
-                      <FiBookOpen className="h-5 w-5 text-purple-600 mr-3" />
-                      <span className="text-sm font-medium text-gray-700">My Topics</span>
                     </a>
                   </>
                 )}
@@ -284,7 +235,7 @@ const Dashboard = () => {
           />
         )}
       </div>
-    </div>
+    </div >
   );
 };
 

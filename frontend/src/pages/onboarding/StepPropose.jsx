@@ -1,171 +1,199 @@
 import React, { useState } from 'react';
-import { FiArrowLeft, FiArrowRight, FiLoader, FiZap, FiEdit3, FiInfo } from 'react-icons/fi';
+import { FiArrowLeft, FiLoader, FiZap, FiEdit3, FiInfo, FiCheckCircle, FiPlus, FiUser } from 'react-icons/fi';
 import { TRACK_COLORS, TRACK_LABELS } from './constants';
 
 const buildPromptPreview = (profile, track) => {
   const p = profile || {};
-  return `You are an expert academic advisor specializing in Computer Science dissertations.
-
-Generate a personalized dissertation proposal based on the following student profile:
-
-STUDENT PROFILE:
+  return `STUDENT PROFILE:
 - Academic Track: ${track}
-- Core Courses Favorites: ${p.coreCoursesFavorites?.join(', ') || 'Not specified'}
-- Advanced Topics Interest: ${p.advancedTopicsInterest?.join(', ') || 'Not specified'}
-- Research Areas: ${p.researchAreas?.join(', ') || 'Not specified'}
+- Topics of Interest: ${p.advancedTopicsInterest?.join(', ') || 'Not specified'}
 - Programming Languages: ${p.programmingLanguages?.join(', ') || 'Not specified'}
-- Career Goals: ${p.careerGoals || 'Not specified'}
-- Research Methodology: ${p.researchMethodology || 'Not specified'}
-- Available Hours/Week: ${p.weeklyHours || 10}
-- Difficulty Level: ${p.difficultyLevel || 'intermediate'}
+- Project Style: ${p.researchMethodology || 'Not specified'}
+- Difficulty Level: ${p.difficultyLevel || 'Not specified'}
+- Goals: ${p.careerGoals || 'Not specified'}
 
-→ Generate: title (10-200 chars), description (<1800 chars), suggestedDeadline (ISO date)`;
+→ Generate: title (10-200 chars), description (<1800 chars)`;
 };
 
 const StepPropose = ({
   selectedTrack, profile, propForm, setPropForm,
   teachers, generatingAI, submittingProp,
-  propError, onGenerate, onSubmit, onBack, onSkip, today
+  propError, onGenerate, onSubmit, onBack, onFinish,
+  submittedProposals, today
 }) => {
   const [showPrompt, setShowPrompt] = useState(false);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
+    <div className="max-w-6xl mx-auto px-4 py-10">
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-600 to-blue-600 text-white mb-4 shadow-lg">
           <FiEdit3 className="w-8 h-8" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Πρότεινε τη δική σου θεματική</h1>
-        <p className="text-gray-500">Μετά θα επιλέξεις 8 ακόμα από τις υπάρχουσες εργασίες</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Πρότεινε θεματικές εργασίας</h1>
+        <p className="text-gray-500">Μπορείς να προτείνεις όσες θεματικές θέλεις. Οι καθηγητές θα τις αξιολογήσουν.</p>
       </div>
 
-      <form onSubmit={onSubmit} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-7 space-y-5">
-        {propError && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">{propError}</div>
-        )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[600px]">
 
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Track</label>
-            <span className={`inline-block px-3 py-1.5 rounded-full text-xs font-bold ${TRACK_COLORS[selectedTrack]}`}>
-              {selectedTrack} - {TRACK_LABELS[selectedTrack]}
-            </span>
-          </div>
-
-          <div className="flex items-end gap-2">
-            <div className="relative flex items-end gap-2">
+        {/* Left: form */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-gray-800">Νέα Πρόταση</h2>
+            <div className="relative inline-flex">
+              {!generatingAI && (
+                <span className="absolute inset-0 rounded-lg animate-ping bg-gradient-to-r from-purple-400 to-blue-400 opacity-30" />
+              )}
               <button
                 type="button"
                 onClick={onGenerate}
                 disabled={generatingAI}
                 onMouseEnter={() => setShowPrompt(true)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  generatingAI
+                className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${generatingAI
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-sm'
-                }`}
+                    : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md hover:shadow-lg hover:scale-105'
+                  }`}
               >
-                {generatingAI
-                  ? <FiLoader className="w-4 h-4 animate-spin" />
-                  : <FiZap className="w-4 h-4" />
-                }
-                {generatingAI ? 'Δημιουργία...' : 'Παραγωγή AI'}
+                <span className="relative flex items-center gap-2">
+                  {generatingAI
+                    ? <><FiLoader className="w-4 h-4 animate-spin" /> Δημιουργία...</>
+                    : <><FiZap className="w-4 h-4 animate-bounce" /> Generate with AI</>
+                  }
+                </span>
               </button>
-
-              {showPrompt && !generatingAI && (
-                <div
-                  className="absolute left-full top-0 ml-3 w-96 z-50"
-                  onMouseLeave={() => setShowPrompt(false)}
-                >
-                  <div className="bg-gray-900 text-gray-100 rounded-xl shadow-2xl p-4 border border-gray-700">
-                    <div className="flex items-center gap-2 mb-2 border-b border-gray-700 pb-2">
-                      <FiInfo className="w-4 h-4 text-purple-400 flex-shrink-0" />
-                      <span className="text-xs font-semibold text-purple-400 uppercase tracking-wide">Prompt που θα σταλεί στο Gemini</span>
-                    </div>
-                    <pre className="text-xs text-gray-300 whitespace-pre-wrap font-mono leading-relaxed max-h-64 overflow-y-auto">
-                      {buildPromptPreview(profile, selectedTrack)}
-                    </pre>
-                    <div className="mt-2 pt-2 border-t border-gray-700">
-                      <p className="text-xs text-gray-500">Το προφίλ σου καθορίζει την ποιότητα της πρότασης</p>
-                    </div>
-                  </div>
-                  <div className="absolute -left-2 top-3 w-4 h-4 bg-gray-900 border-l border-b border-gray-700 transform rotate-45" />
-                </div>
-              )}
             </div>
           </div>
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Τίτλος <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={propForm.title}
-            onChange={e => setPropForm(p => ({ ...p, title: e.target.value }))}
-            maxLength={200}
-            placeholder="π.χ. Ανάπτυξη συστήματος..."
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
+          {propError && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-lg text-sm">{propError}</div>
+          )}
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Περιγραφή <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            value={propForm.description}
-            onChange={e => setPropForm(p => ({ ...p, description: e.target.value }))}
-            maxLength={3000}
-            rows={5}
-            placeholder="Περίγραψε τι θέλεις να κάνεις..."
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            required
-          />
-        </div>
+          <form onSubmit={onSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Track</label>
+              <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${TRACK_COLORS[selectedTrack]}`}>
+                {selectedTrack} - {TRACK_LABELS[selectedTrack]}
+              </span>
+            </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Επιβλέπων <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={propForm.supervisorId}
-              onChange={e => setPropForm(p => ({ ...p, supervisorId: e.target.value }))}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="">Επέλεξε καθηγητή</option>
-              {teachers.map(t => (
-                <option key={t._id} value={t._id}>{t.name} {t.surname}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Τίτλος <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={propForm.title}
+                onChange={e => setPropForm(p => ({ ...p, title: e.target.value }))}
+                maxLength={200}
+                placeholder="π.χ. Ανάπτυξη συστήματος..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
 
-        <div className="flex items-center justify-between pt-2">
-          <button type="button" onClick={onBack} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition">
-            <FiArrowLeft className="w-4 h-4" /> Πίσω
-          </button>
-          <div className="flex gap-3">
-            <button type="button" onClick={onSkip} className="text-sm text-gray-400 hover:text-gray-600 transition">
-              Παράλειψη
-            </button>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Περιγραφή <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={propForm.description}
+                onChange={e => setPropForm(p => ({ ...p, description: e.target.value }))}
+                maxLength={3000}
+                rows={4}
+                placeholder="Περίγραψε τι θέλεις να κάνεις..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Επιβλέπων <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={propForm.supervisorId}
+                onChange={e => setPropForm(p => ({ ...p, supervisorId: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Επέλεξε καθηγητή</option>
+                {teachers.map(t => (
+                  <option key={t._id} value={t._id}>{t.name} {t.surname}</option>
+                ))}
+              </select>
+            </div>
+
             <button
               type="submit"
               disabled={submittingProp}
-              className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submittingProp
                 ? <><FiLoader className="w-4 h-4 animate-spin" /> Υποβολή...</>
-                : <><FiArrowRight className="w-4 h-4" /> Υποβολή & Συνέχεια</>
+                : <><FiPlus className="w-4 h-4" /> Υποβολή Πρότασης</>
               }
+            </button>
+          </form>
+        </div>
+
+        {/* Right: submitted proposals */}
+        <div className="flex flex-col gap-4">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 flex-1">
+            <h2 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <FiCheckCircle className="text-green-500 w-5 h-5" />
+              Υποβληθείσες Προτάσεις
+              {submittedProposals.length > 0 && (
+                <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                  {submittedProposals.length}
+                </span>
+              )}
+            </h2>
+
+            {submittedProposals.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                <FiEdit3 className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p className="text-sm">Δεν έχεις υποβάλει ακόμα καμία πρόταση</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {submittedProposals.map((p, idx) => (
+                  <div key={p._id} className="p-3 bg-green-50 border border-green-200 rounded-xl">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-green-700 mb-0.5">#{idx + 1}</p>
+                        <p className="text-sm font-semibold text-gray-800 line-clamp-2">{p.title}</p>
+                        {p.supervisorId && (
+                          <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                            <FiUser className="w-3 h-3" />
+                            {p.supervisorId.name} {p.supervisorId.surname}
+                          </p>
+                        )}
+                      </div>
+                      <FiCheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition"
+            >
+              <FiArrowLeft className="w-4 h-4" /> Πίσω
+            </button>
+            <button
+              onClick={onFinish}
+              disabled={submittedProposals.length === 0}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-sm font-medium shadow-sm transition"
+            >
+              <FiCheckCircle className="w-4 h-4" />
+              Ολοκλήρωση ({submittedProposals.length} πρόταση{submittedProposals.length !== 1 ? 'εις' : ''})
             </button>
           </div>
         </div>
-      </form>
+      </div>
     </div>
   );
 };

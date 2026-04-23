@@ -1,163 +1,237 @@
-import React from 'react';
-import { FiArrowRight, FiArrowLeft, FiLoader, FiBookOpen, FiCode, FiTarget, FiBriefcase, FiTrendingUp } from 'react-icons/fi';
+import React, { useState } from 'react';
+import { FiArrowRight, FiArrowLeft, FiLoader } from 'react-icons/fi';
 import profileQuestions from '../../config/profileQuestions.json';
 
-const StepProfile = ({ profile, onArrayChange, onFieldChange, onNext, onBack, onSkip, saving, error }) => (
-  <div className="max-w-3xl mx-auto px-4 py-10">
-    <div className="text-center mb-8">
-      <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-purple-600 text-white mb-4 shadow-lg">
-        <FiBookOpen className="w-8 h-8" />
+const INTERESTS = profileQuestions.advancedTopics;
+const LANGUAGES = profileQuestions.programmingLanguages;
+const MAX_INTERESTS = 5;
+
+const SUB_STEPS = [
+  { id: 1, title: 'Τι σε ενδιαφέρει;', subtitle: 'Επέλεξε μέχρι 5 θέματα που σε ενδιαφέρουν περισσότερο' },
+  { id: 2, title: 'Εργαλεία & Γλώσσες', subtitle: 'Τι εργαλεία γνωρίζεις και σε ποιο επίπεδο;' },
+  { id: 3, title: 'Στυλ εργασίας', subtitle: 'Τι είδος project προτιμάς;' },
+  { id: 4, title: 'Λίγα λόγια για σένα', subtitle: 'Προαιρετικά - βοηθά το AI να σου κάνει καλύτερη πρόταση' },
+];
+
+const Chip = ({ label, selected, onClick, disabled }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={disabled && !selected}
+    className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-150 ${selected
+        ? 'bg-purple-600 border-purple-600 text-white shadow-sm'
+        : disabled
+          ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
+          : 'bg-white border-gray-300 text-gray-700 hover:border-purple-400 hover:text-purple-600'
+      }`}
+  >
+    {label}
+  </button>
+);
+
+const SubStepDots = ({ total, current }) => (
+  <div className="flex items-center justify-center gap-2 mb-8">
+    {Array.from({ length: total }).map((_, i) => (
+      <div
+        key={i}
+        className={`rounded-full transition-all duration-300 ${i + 1 === current ? 'w-6 h-2 bg-purple-600' :
+            i + 1 < current ? 'w-2 h-2 bg-purple-300' :
+              'w-2 h-2 bg-gray-200'
+          }`}
+      />
+    ))}
+  </div>
+);
+
+const PROJECT_STYLES = [
+  {
+    value: 'theoretical',
+    icon: '📚',
+    title: 'Research',
+    desc: 'Θεωρητική ανάλυση, papers, αλγόριθμοι'
+  },
+  {
+    value: 'practical',
+    icon: '⚙️',
+    title: 'Practical',
+    desc: 'Ανάπτυξη λογισμικού, υλοποίηση συστημάτων'
+  },
+  {
+    value: 'mixed',
+    icon: '🔀',
+    title: 'Hybrid',
+    desc: 'Συνδυασμός θεωρίας και πράξης'
+  },
+];
+
+const DIFFICULTY_OPTIONS = [
+  { value: 'beginner', label: 'Beginner', desc: 'Βασισμένο στη γνώση των μαθημάτων' },
+  { value: 'intermediate', label: 'Intermediate', desc: 'Εξερεύνηση νέων τεχνολογιών' },
+  { value: 'advanced', label: 'Advanced', desc: 'Cutting-edge έρευνα & καινοτομία' },
+];
+
+export default function StepProfile({ profile, onArrayChange, onFieldChange, onNext, onBack, saving, error }) {
+  const [subStep, setSubStep] = useState(1);
+
+  const goNext = () => {
+    if (subStep < SUB_STEPS.length) setSubStep(s => s + 1);
+    else onNext();
+  };
+
+  const goPrev = () => {
+    if (subStep > 1) setSubStep(s => s - 1);
+    else onBack();
+  };
+
+  const interestsReachedMax = profile.advancedTopicsInterest.length >= MAX_INTERESTS;
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-10">
+      <SubStepDots total={SUB_STEPS.length} current={subStep} />
+
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">{SUB_STEPS[subStep - 1].title}</h1>
+        <p className="text-gray-500">{SUB_STEPS[subStep - 1].subtitle}</p>
       </div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Το προφίλ σου</h1>
-      <p className="text-gray-500">Συμπλήρωσε τις παρακάτω πληροφορίες ώστε το AI να σου κάνει καλύτερη πρόταση</p>
-    </div>
 
-    {error && (
-      <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">{error}</div>
-    )}
+      {error && subStep === SUB_STEPS.length && (
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">{error}</div>
+      )}
 
-    <div className="space-y-6">
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-          <FiBookOpen className="text-blue-600 w-5 h-5" /> Favorite Core Courses
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {profileQuestions.coreCourses.map(course => (
-            <label key={course} className="flex items-center gap-2 p-2.5 hover:bg-blue-50 rounded-lg cursor-pointer border border-transparent hover:border-blue-200 transition">
-              <input type="checkbox" checked={profile.coreCoursesFavorites.includes(course)}
-                onChange={() => onArrayChange('coreCoursesFavorites', course)}
-                className="w-4 h-4 text-blue-600 rounded" />
-              <span className="text-sm text-gray-700">{course}</span>
-            </label>
-          ))}
+      {subStep === 1 && (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm text-gray-500">Επιλεγμένα: {profile.advancedTopicsInterest.length}/{MAX_INTERESTS}</span>
+            {profile.advancedTopicsInterest.length > 0 && (
+              <button
+                type="button"
+                onClick={() => profile.advancedTopicsInterest.forEach(i => onArrayChange('advancedTopicsInterest', i))}
+                className="text-xs text-red-500 hover:text-red-700"
+              >
+                Καθαρισμός
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {INTERESTS.map(interest => (
+              <Chip
+                key={interest}
+                label={interest}
+                selected={profile.advancedTopicsInterest.includes(interest)}
+                onClick={() => onArrayChange('advancedTopicsInterest', interest)}
+                disabled={interestsReachedMax}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-          <FiTarget className="text-purple-600 w-5 h-5" /> Advanced Topics Interest
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {profileQuestions.advancedTopics.map(topic => (
-            <label key={topic} className="flex items-center gap-2 p-2.5 hover:bg-purple-50 rounded-lg cursor-pointer border border-transparent hover:border-purple-200 transition">
-              <input type="checkbox" checked={profile.advancedTopicsInterest.includes(topic)}
-                onChange={() => onArrayChange('advancedTopicsInterest', topic)}
-                className="w-4 h-4 text-purple-600 rounded" />
-              <span className="text-sm text-gray-700">{topic}</span>
-            </label>
-          ))}
+      {subStep === 2 && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Γλώσσες προγραμματισμού</h3>
+            <div className="flex flex-wrap gap-2">
+              {LANGUAGES.map(lang => (
+                <Chip
+                  key={lang}
+                  label={lang}
+                  selected={profile.programmingLanguages.includes(lang)}
+                  onClick={() => onArrayChange('programmingLanguages', lang)}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Επίπεδο γνώσης</h3>
+            <div className="grid grid-cols-3 gap-3">
+              {DIFFICULTY_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => onFieldChange('difficultyLevel', opt.value)}
+                  className={`p-4 rounded-xl border-2 text-left transition-all duration-150 ${profile.difficultyLevel === opt.value
+                      ? 'border-purple-600 bg-purple-50'
+                      : 'border-gray-200 hover:border-purple-300'
+                    }`}
+                >
+                  <p className={`font-semibold text-sm ${profile.difficultyLevel === opt.value ? 'text-purple-700' : 'text-gray-800'}`}>
+                    {opt.label}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-          <FiTrendingUp className="text-green-600 w-5 h-5" /> Research Areas
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {profileQuestions.researchAreas.map(area => (
-            <label key={area} className="flex items-center gap-2 p-2.5 hover:bg-green-50 rounded-lg cursor-pointer border border-transparent hover:border-green-200 transition">
-              <input type="checkbox" checked={profile.researchAreas.includes(area)}
-                onChange={() => onArrayChange('researchAreas', area)}
-                className="w-4 h-4 text-green-600 rounded" />
-              <span className="text-sm text-gray-700">{area}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-          <FiCode className="text-indigo-600 w-5 h-5" /> Programming Languages
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {profileQuestions.programmingLanguages.map(lang => (
-            <label key={lang} className="flex items-center gap-2 p-2.5 hover:bg-indigo-50 rounded-lg cursor-pointer border border-transparent hover:border-indigo-200 transition">
-              <input type="checkbox" checked={profile.programmingLanguages.includes(lang)}
-                onChange={() => onArrayChange('programmingLanguages', lang)}
-                className="w-4 h-4 text-indigo-600 rounded" />
-              <span className="text-sm text-gray-700">{lang}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-          <FiBriefcase className="text-orange-600 w-5 h-5" /> Career & Preferences
-        </h2>
+      {subStep === 3 && (
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Career Goals</label>
-            <textarea
-              value={profile.careerGoals}
-              onChange={e => onFieldChange('careerGoals', e.target.value)}
-              rows={2}
-              placeholder="e.g., Software Engineer, Data Scientist, AI Researcher..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Research Methodology</label>
-              <select
-                value={profile.researchMethodology}
-                onChange={e => onFieldChange('researchMethodology', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select...</option>
-                {profileQuestions.researchMethodologies.map(m => (
-                  <option key={m.value} value={m.value}>{m.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Difficulty Level</label>
-              <select
-                value={profile.difficultyLevel}
-                onChange={e => onFieldChange('difficultyLevel', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select...</option>
-                {profileQuestions.difficultyLevels.map(l => (
-                  <option key={l.value} value={l.value}>{l.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Weekly Hours Available: <span className="font-bold text-blue-600">{profile.weeklyHours}h</span>
-            </label>
-            <input
-              type="range" min="5" max="40" step="5"
-              value={profile.weeklyHours}
-              onChange={e => onFieldChange('weeklyHours', parseInt(e.target.value))}
-              className="w-full accent-blue-600"
-            />
-            <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>5h</span><span>20h</span><span>40h</span>
-            </div>
-          </div>
+          {PROJECT_STYLES.map(style => (
+            <button
+              key={style.value}
+              type="button"
+              onClick={() => onFieldChange('researchMethodology', style.value)}
+              className={`w-full p-5 rounded-2xl border-2 text-left transition-all duration-150 flex items-center gap-4 ${profile.researchMethodology === style.value
+                  ? 'border-purple-600 bg-purple-50 shadow-sm'
+                  : 'border-gray-200 bg-white hover:border-purple-300'
+                }`}
+            >
+              <span className="text-3xl">{style.icon}</span>
+              <div>
+                <p className={`font-semibold text-base ${profile.researchMethodology === style.value ? 'text-purple-700' : 'text-gray-800'}`}>
+                  {style.title}
+                </p>
+                <p className="text-sm text-gray-500 mt-0.5">{style.desc}</p>
+              </div>
+              {profile.researchMethodology === style.value && (
+                <div className="ml-auto w-5 h-5 rounded-full bg-purple-600 flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+            </button>
+          ))}
         </div>
-      </div>
-    </div>
+      )}
 
-    <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
-      <button onClick={onBack} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition">
-        <FiArrowLeft className="w-4 h-4" /> Πίσω
-      </button>
-      <div className="flex gap-3">
-        <button onClick={onSkip} className="text-sm text-gray-400 hover:text-gray-600 transition">Παράλειψη</button>
-        <button onClick={onNext} disabled={saving}
-          className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-medium shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed">
-          {saving
+      {subStep === 4 && (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Στόχοι</label>
+          <textarea
+            value={profile.careerGoals}
+            onChange={e => onFieldChange('careerGoals', e.target.value)}
+            rows={5}
+            placeholder="π.χ. Software Engineer, Data Scientist, AI Researcher..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+          />
+        </div>
+      )}
+
+      <div className="flex items-center justify-between mt-8">
+        <button
+          type="button"
+          onClick={goPrev}
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition"
+        >
+          <FiArrowLeft className="w-4 h-4" />
+          Πίσω
+        </button>
+        <button
+          type="button"
+          onClick={goNext}
+          disabled={saving && subStep === SUB_STEPS.length}
+          className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-medium shadow-sm transition disabled:opacity-50"
+        >
+          {saving && subStep === SUB_STEPS.length
             ? <><FiLoader className="w-4 h-4 animate-spin" /> Αποθήκευση...</>
-            : <>Συνέχεια <FiArrowRight className="w-4 h-4" /></>
+            : subStep === SUB_STEPS.length
+              ? <>Αποθήκευση <FiArrowRight className="w-4 h-4" /></>
+              : <>Συνέχεια <FiArrowRight className="w-4 h-4" /></>
           }
         </button>
       </div>
     </div>
-  </div>
-);
-
-export default StepProfile;
+  );
+}

@@ -1,15 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { dissertationAPI, applicationAPI, userAPI } from '../../services/api';
-import { FiX, FiBookOpen } from 'react-icons/fi';
+import { dissertationAPI, userAPI } from '../../services/api';
+import { FiBookOpen } from 'react-icons/fi';
 
-import StepTrack    from './StepTrack';
-import StepMode     from './StepMode';
-import StepProfile  from './StepProfile';
-import StepPropose  from './StepPropose';
-import StepBrowse   from './StepBrowse';
-import StepTiering  from './StepTiering';
+import StepTrack   from './StepTrack';
+import StepProfile from './StepProfile';
+import StepPropose from './StepPropose';
+
+const STORAGE_KEY = 'onboarding_state';
+
+const defaultProfile = {
+  interests: [], preferredTopics: [], skills: [], programmingLanguages: [],
+  careerGoals: '', previousExperience: '', researchMethodology: '',
+  weeklyHours: 10, difficultyLevel: '', coreCoursesFavorites: [],
+  advancedTopicsInterest: [], researchAreas: []
+};
+
+const loadSaved = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const clearSaved = () => localStorage.removeItem(STORAGE_KEY);
 
 export default function Onboarding() {
   const { user, refreshUser } = useAuth();
@@ -21,67 +38,41 @@ export default function Onboarding() {
     if (user?.hasCompletedOnboarding) navigate('/dashboard', { replace: true });
   }, [user, navigate]);
 
-  const [currentStep, setCurrentStep] = useState(1);
+  const saved = useRef(loadSaved());
+
+  const [currentStep, setCurrentStep] = useState(saved.current?.currentStep || 1);
   const [animating, setAnimating] = useState(false);
   const [slideDir, setSlideDir] = useState('forward');
 
-  const [selectedTrack, setSelectedTrack] = useState('');
+  const [selectedTrack, setSelectedTrack] = useState(saved.current?.selectedTrack || user?.track || '');
   const [savingTrack, setSavingTrack] = useState(false);
 
-  const [mode, setMode] = useState(null);
-  const [proposalDone, setProposalDone] = useState(false);
-  const [proposalItem, setProposalItem] = useState(null);
-
-  const [profile, setProfile] = useState({
-    interests: [], preferredTopics: [], skills: [], programmingLanguages: [],
-    careerGoals: '', previousExperience: '', researchMethodology: '',
-    weeklyHours: 10, difficultyLevel: '', coreCoursesFavorites: [],
-    advancedTopicsInterest: [], researchAreas: []
-  });
+  const [profile, setProfile] = useState(saved.current?.profile || defaultProfile);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState('');
 
   const [teachers, setTeachers] = useState([]);
-  const [propForm, setPropForm] = useState({ title: '', description: '', supervisorId: '', deadline: '' });
+  const [propForm, setPropForm] = useState(saved.current?.propForm || { title: '', description: '', supervisorId: '' });
   const [generatingAI, setGeneratingAI] = useState(false);
   const [submittingProp, setSubmittingProp] = useState(false);
   const [propError, setPropError] = useState('');
+  const [submittedProposals, setSubmittedProposals] = useState(saved.current?.submittedProposals || []);
   const teachersLoaded = useRef(false);
 
-  const [dissertations, setDissertations] = useState([]);
-  const [loadingDiss, setLoadingDiss] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDissertations, setSelectedDissertations] = useState([]);
-  const [submittingSelections, setSubmittingSelections] = useState(false);
-  const [selectionError, setSelectionError] = useState('');
-
-  const [tiering, setTiering] = useState({ 1: [], 2: [], 3: [] });
-  const [untiered, setUntiered] = useState([]);
-  const [dragItem, setDragItem] = useState(null);
-  const [dragOver, setDragOver] = useState(null);
-  const [submittingTiers, setSubmittingTiers] = useState(false);
-  const [tierError, setTierError] = useState('');
-
-  const maxSelections = proposalDone ? 8 : 9;
-  const today = new Date().toISOString().slice(0, 10);
+  useEffect(() => {
+    const state = { currentStep, selectedTrack, profile, propForm, submittedProposals };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }, [currentStep, selectedTrack, profile, propForm, submittedProposals]);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await dissertationAPI.getAvailable();
-        setDissertations(res.data.data || []);
-      } catch {
-      } finally {
-        setLoadingDiss(false);
-      }
-    };
-    load();
-  }, []);
+    if (currentStep === 3) handleLoadTeachers();
+  }, [currentStep]);
 
-  const finishOnboarding = async (destination = '/dashboard') => {
+  const finishOnboarding = async () => {
+    clearSaved();
     try { await userAPI.completeOnboarding(); } catch { }
     await refreshUser();
-    navigate(destination, { replace: true });
+    navigate('/dashboard', { replace: true });
   };
 
   const goToStep = (step) => {
@@ -128,7 +119,7 @@ export default function Onboarding() {
     try {
       await userAPI.updateMyProfile({ studentProfile: profile });
       await handleLoadTeachers();
-      goToStep(4);
+      goToStep(3);
     } catch (err) {
       setProfileError(err.response?.data?.error?.message || 'Failed to save profile.');
     } finally {
@@ -137,7 +128,6 @@ export default function Onboarding() {
   };
 
   const handleGenerateAI = async () => {
-    if (!selectedTrack) return;
     setGeneratingAI(true);
     setPropError('');
     try {
@@ -147,7 +137,6 @@ export default function Onboarding() {
         ...prev,
         title: ai.title || prev.title,
         description: ai.description || prev.description,
-        deadline: ai.suggestedDeadline ? ai.suggestedDeadline.slice(0, 10) : prev.deadline,
       }));
     } catch (err) {
       setPropError(err.response?.data?.error?.message || 'Failed to generate proposal.');
@@ -169,137 +158,16 @@ export default function Onboarding() {
         tracks: [selectedTrack],
         title: propForm.title,
         description: propForm.description,
-        supervisorId: propForm.supervisorId,
-        deadline: propForm.deadline || undefined,
+        supervisorId: propForm.supervisorId
       });
-      const proposalDissertation = res.data.data;
-      setProposalItem({
-        applicationId: null,
-        tempId: 'PROPOSAL-' + proposalDissertation._id,
-        isProposal: true,
-        dissertation: proposalDissertation,
-      });
-      setProposalDone(true);
-      goToStep(5);
+      setSubmittedProposals(prev => [...prev, res.data.data]);
+      setPropForm({ title: '', description: '', supervisorId: '' });
     } catch (err) {
       setPropError(err.response?.data?.error?.message || 'Failed to submit proposal.');
     } finally {
       setSubmittingProp(false);
     }
   };
-
-  const toggleDissertation = (d) => {
-    setSelectedDissertations(prev => {
-      const exists = prev.find(x => x._id === d._id);
-      if (exists) return prev.filter(x => x._id !== d._id);
-      if (prev.length >= maxSelections) return prev;
-      return [...prev, d];
-    });
-  };
-
-  const handleSubmitSelections = () => {
-    if (selectedDissertations.length !== maxSelections) return;
-    const items = selectedDissertations.map(d => ({
-      applicationId: null,
-      tempId: d._id,
-      dissertation: d,
-    }));
-    const allItems = proposalItem ? [proposalItem, ...items] : items;
-    setUntiered(allItems);
-    setTiering({ 1: [], 2: [], 3: [] });
-    goToStep(6);
-  };
-
-  const handleDragStart = (item, fromTier) => setDragItem({ item, fromTier });
-
-  const handleDrop = (toTier) => {
-    if (!dragItem) return;
-    const { item, fromTier } = dragItem;
-    if (fromTier === toTier) { setDragItem(null); setDragOver(null); return; }
-    if (toTier !== 'untiered' && tiering[toTier].length >= 3) { setDragItem(null); setDragOver(null); return; }
-
-    const key = (x) => x.tempId || x.applicationId;
-    if (fromTier === 'untiered') setUntiered(prev => prev.filter(x => key(x) !== key(item)));
-    else setTiering(prev => ({ ...prev, [fromTier]: prev[fromTier].filter(x => key(x) !== key(item)) }));
-
-    if (toTier === 'untiered') setUntiered(prev => [...prev, item]);
-    else setTiering(prev => ({ ...prev, [toTier]: [...prev[toTier], item] }));
-
-    setDragItem(null);
-    setDragOver(null);
-  };
-
-  const moveItem = (item, fromTier, toTier) => {
-    if (toTier !== 'untiered' && tiering[toTier].length >= 3) return;
-    const key = (x) => x.tempId || x.applicationId;
-    if (fromTier === 'untiered') setUntiered(prev => prev.filter(x => key(x) !== key(item)));
-    else setTiering(prev => ({ ...prev, [fromTier]: prev[fromTier].filter(x => key(x) !== key(item)) }));
-    if (toTier === 'untiered') setUntiered(prev => [...prev, item]);
-    else setTiering(prev => ({ ...prev, [toTier]: [...prev[toTier], item] }));
-  };
-
-  const isTieringComplete = () => {
-    const total = tiering[1].length + tiering[2].length + tiering[3].length;
-    const expected = proposalItem ? maxSelections + 1 : maxSelections;
-    return total === expected && untiered.length === 0;
-  };
-
-  const handleSubmitTiers = async () => {
-    if (!isTieringComplete()) return;
-    setSubmittingTiers(true);
-    setTierError('');
-    try {
-      const allItems = [];
-      [1, 2, 3].forEach(tier => {
-        tiering[tier].forEach((item, idx) => {
-          allItems.push({ ...item, tier, position: idx + 1 });
-        });
-      });
-
-      const regularItems = allItems.filter(i => !i.isProposal);
-      const proposalTierItem = allItems.find(i => i.isProposal);
-
-      const regularResults = await Promise.all(
-        regularItems.map(item =>
-          applicationAPI.create({ dissertationId: item.dissertation._id })
-        )
-      );
-
-      const regularIds = regularItems.map((item, idx) => ({
-        item,
-        appId: regularResults[idx].data.data._id
-      }));
-
-      let proposalAppId = null;
-      if (proposalTierItem) {
-        const existing = await applicationAPI.getMyApplications();
-        const regularAppIds = regularIds.map(r => r.appId);
-        const found = existing.data.data.find(a => !regularAppIds.includes(a._id));
-        if (!found) throw new Error('Proposal application not found');
-        proposalAppId = found._id;
-      }
-
-      const key = (x) => x.tempId || x.applicationId;
-      const bulkPayload = allItems.map(item => ({
-        applicationId: item.isProposal
-          ? proposalAppId
-          : regularIds.find(r => key(r.item) === key(item))?.appId,
-        tier: item.tier,
-        position: item.position,
-      }));
-
-      await applicationAPI.bulkTier(bulkPayload);
-      await finishOnboarding('/dashboard');
-    } catch (err) {
-      setTierError(err.response?.data?.error?.message || 'Failed to save tiers.');
-    } finally {
-      setSubmittingTiers(false);
-    }
-  };
-
-  const filteredByTrack = dissertations.filter(d =>
-    d.tracks && d.tracks.includes(selectedTrack)
-  );
 
   const slideOut = slideDir === 'forward' ? '-translate-x-full opacity-0' : 'translate-x-full opacity-0';
   const slideIn  = slideDir === 'forward' ? 'translate-x-full opacity-0'  : '-translate-x-full opacity-0';
@@ -314,49 +182,35 @@ export default function Onboarding() {
           <span className="font-bold text-gray-800 text-lg">ThesisFlow</span>
         </div>
         <div className="flex items-center gap-3">
-          {[2, 3, 4, 5, 6].map((s, i) => (
+          {[1, 2, 3].map((s, i) => (
             <div key={s} className="flex items-center gap-1.5">
               <div className={`rounded-full transition-all duration-300 ${currentStep === s ? 'w-6 h-3 bg-blue-600' : currentStep > s ? 'w-3 h-3 bg-blue-400' : 'w-3 h-3 bg-gray-300'}`} />
-              {i < 4 && <div className="w-6 h-px bg-gray-300" />}
+              {i < 2 && <div className="w-8 h-px bg-gray-300" />}
             </div>
           ))}
           <span className="ml-2 text-sm text-gray-500 font-medium">
-            {currentStep > 1 ? `Βήμα ${currentStep - 1} από 5` : ''}
+            Βήμα {currentStep} από 3
           </span>
         </div>
-        <button onClick={() => finishOnboarding('/dashboard')} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition">
-          <FiX className="w-4 h-4" /> Παράλειψη
-        </button>
+        <div />
       </div>
 
       <div className="flex-1 overflow-hidden relative">
-
         <div className={`absolute inset-0 overflow-y-auto transition-all duration-300 ease-in-out ${stepVisible(1)}`}>
           <StepTrack userName={user?.name} onSelect={handleSelectTrack} saving={savingTrack} />
         </div>
-
         <div className={`absolute inset-0 overflow-y-auto transition-all duration-300 ease-in-out ${stepVisible(2)}`}>
-          <StepMode
-            onBrowse={() => { setMode('browse'); goToStep(5); }}
-            onAI={() => { setMode('ai'); goToStep(3); }}
-            onBack={() => goToStep(1)}
-          />
-        </div>
-
-        <div className={`absolute inset-0 overflow-y-auto transition-all duration-300 ease-in-out ${stepVisible(3)}`}>
           <StepProfile
             profile={profile}
             onArrayChange={handleArrayChange}
             onFieldChange={(field, val) => setProfile(p => ({ ...p, [field]: val }))}
             onNext={handleProfileNext}
-            onBack={() => goToStep(2)}
-            onSkip={() => finishOnboarding('/dashboard')}
+            onBack={() => goToStep(1)}
             saving={savingProfile}
             error={profileError}
           />
         </div>
-
-        <div className={`absolute inset-0 overflow-y-auto transition-all duration-300 ease-in-out ${stepVisible(4)}`}>
+        <div className={`absolute inset-0 overflow-y-auto transition-all duration-300 ease-in-out ${stepVisible(3)}`}>
           <StepPropose
             selectedTrack={selectedTrack}
             profile={profile}
@@ -368,47 +222,11 @@ export default function Onboarding() {
             propError={propError}
             onGenerate={handleGenerateAI}
             onSubmit={handlePropose}
-            onBack={() => goToStep(3)}
-            onSkip={() => finishOnboarding('/dashboard')}
-            today={today}
+            onBack={() => goToStep(2)}
+            onFinish={finishOnboarding}
+            submittedProposals={submittedProposals}
           />
         </div>
-
-        <div className={`absolute inset-0 overflow-y-auto transition-all duration-300 ease-in-out ${stepVisible(5)}`}>
-          <StepBrowse
-            dissertations={filteredByTrack}
-            loading={loadingDiss}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            selectedDissertations={selectedDissertations}
-            maxSelections={maxSelections}
-            proposalDone={proposalDone}
-            onToggle={toggleDissertation}
-            onSubmit={handleSubmitSelections}
-            onBack={() => goToStep(mode === 'ai' ? 4 : 2)}
-            onSkip={() => finishOnboarding('/dashboard')}
-            submitting={submittingSelections}
-            error={selectionError}
-          />
-        </div>
-
-        <div className={`absolute inset-0 overflow-y-auto transition-all duration-300 ease-in-out ${stepVisible(6)}`}>
-          <StepTiering
-            tiering={tiering}
-            untiered={untiered}
-            dragOver={dragOver}
-            onDragStart={handleDragStart}
-            onDrop={handleDrop}
-            onDragOver={setDragOver}
-            onDragLeave={() => setDragOver(null)}
-            moveItem={moveItem}
-            isTieringComplete={isTieringComplete}
-            onSubmit={handleSubmitTiers}
-            submitting={submittingTiers}
-            error={tierError}
-          />
-        </div>
-
       </div>
     </div>
   );
