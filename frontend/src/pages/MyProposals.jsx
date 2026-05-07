@@ -3,7 +3,7 @@ import { dissertationAPI, userAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
   FiClock, FiCheckCircle, FiUser, FiCalendar,
-  FiZap, FiLoader, FiPlus, FiEdit3, FiInfo
+  FiZap, FiLoader, FiPlus, FiEdit3, FiInfo, FiX
 } from 'react-icons/fi';
 
 const TRACK_COLORS = {
@@ -52,13 +52,12 @@ const MyProposals = () => {
     try {
       setLoading(true);
       const [dissRes, profileRes] = await Promise.all([
-        dissertationAPI.getAll(),
+        dissertationAPI.getMyDissertations(),
         userAPI.getMyProfile()
       ]);
 
       const studentProposals = dissRes.data.data.filter(
-        d => d.studentId?._id?.toString() === user._id?.toString() &&
-          d.status === 'pending_approval'
+        d => d.status === 'pending_approval'
       );
       setProposals(studentProposals);
       setProfile(profileRes.data.data.studentProfile || null);
@@ -120,6 +119,16 @@ const MyProposals = () => {
     }
   };
 
+  const handleWithdraw = async (id) => {
+    if (!window.confirm('Είσαι σίγουρος ότι θέλεις να αποσύρεις αυτήν την πρόταση;')) return;
+    try {
+      await dissertationAPI.withdrawProposal(id);
+      setProposals(prev => prev.filter(p => p._id !== id));
+    } catch (err) {
+      setError(err.response?.data?.error?.message || 'Failed to withdraw proposal.');
+    }
+  };
+
   if (hasActiveDissertation) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -170,12 +179,12 @@ const MyProposals = () => {
                   )}
                   <button
                     type="button"
-                    onClick={handleGenerateAI} 
+                    onClick={handleGenerateAI}
                     disabled={generatingAI}
                     onMouseEnter={() => setShowPrompt(true)}
                     className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${generatingAI
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md hover:shadow-lg hover:scale-105'
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md hover:shadow-lg hover:scale-105'
                       }`}
                   >
                     <span className="relative flex items-center gap-2">
@@ -290,6 +299,14 @@ const MyProposals = () => {
                     <div className="p-5">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
+                          <button
+                            type="button"
+                            onClick={() => handleWithdraw(proposal._id)}
+                            className="text-gray-300 hover:text-red-500 transition flex-shrink-0 ml-2"
+                            title="Απόσυρση πρότασης"
+                          >
+                            <FiX className="w-4 h-4" />
+                          </button>
                           <div className="flex flex-wrap gap-1 mb-2">
                             {proposal.tracks && proposal.tracks.map(t => (
                               <span key={t} className={`px-2 py-0.5 text-xs font-semibold rounded-full ${TRACK_COLORS[t] || 'bg-gray-100 text-gray-700'}`}>{t}</span>

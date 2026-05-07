@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiArrowLeft, FiLoader, FiZap, FiEdit3, FiInfo, FiCheckCircle, FiPlus, FiUser } from 'react-icons/fi';
+import { FiArrowLeft, FiLoader, FiZap, FiEdit3, FiInfo, FiCheckCircle, FiPlus, FiUser, FiX } from 'react-icons/fi';
 import { TRACK_COLORS, TRACK_LABELS } from './constants';
 
 const buildPromptPreview = (profile, track) => {
@@ -19,7 +19,7 @@ const StepPropose = ({
   selectedTrack, profile, propForm, setPropForm,
   teachers, generatingAI, submittingProp,
   propError, onGenerate, onSubmit, onBack, onFinish,
-  submittedProposals, today
+  submittedProposals, today,onWithdraw
 }) => {
   const [showPrompt, setShowPrompt] = useState(false);
 
@@ -49,8 +49,8 @@ const StepPropose = ({
                 disabled={generatingAI}
                 onMouseEnter={() => setShowPrompt(true)}
                 className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${generatingAI
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md hover:shadow-lg hover:scale-105'
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md hover:shadow-lg hover:scale-105'
                   }`}
               >
                 <span className="relative flex items-center gap-2">
@@ -168,7 +168,14 @@ const StepPropose = ({
                           </p>
                         )}
                       </div>
-                      <FiCheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                      <button
+                        type="button"
+                        onClick={() => onWithdraw(p._id)}
+                        className="text-gray-400 hover:text-red-500 transition flex-shrink-0"
+                        title="Απόσυρση πρότασης"
+                      >
+                        <FiX className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 ))}

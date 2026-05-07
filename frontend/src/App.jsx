@@ -9,13 +9,13 @@ import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/UserManagement';
 import SystemSettings from './pages/SystemSettings';
 import MyDissertation from './pages/MyDissertation';
-import CreateTopic from './pages/CreateTopic';
 import MyStudents from './pages/MyStudents';
 import DissertationDetails from './pages/DissertationDetails';
 import PendingProposals from './pages/PendingProposals';
 import StudentProfile from './pages/student/StudentProfile';
 import MyProposals from './pages/MyProposals';
 import Onboarding from './pages/onboarding/index';
+import Register from './pages/Register';
 
 function App() {
   return (
@@ -26,6 +26,7 @@ function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route
               path="/onboarding"
               element={
@@ -81,14 +82,6 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['teacher', 'student', 'admin']}>
                   <DissertationDetails />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/create-topic"
-              element={
-                <ProtectedRoute allowedRoles={['teacher']}>
-                  <CreateTopic />
                 </ProtectedRoute>
               }
             />

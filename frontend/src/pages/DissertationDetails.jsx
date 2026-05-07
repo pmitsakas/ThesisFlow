@@ -208,11 +208,6 @@ const DissertationDetails = () => {
     return 'bg-red-500';
   };
 
-  const getDaysUntilDeadline = (deadline) => {
-    if (!deadline) return null;
-    const days = Math.ceil((new Date(deadline) - new Date()) / (1000 * 60 * 60 * 24));
-    return days;
-  };
 
   const isTeacher = user?.role === 'teacher';
   const isStudent = user?.role === 'student';

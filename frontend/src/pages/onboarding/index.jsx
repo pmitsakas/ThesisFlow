@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { dissertationAPI, userAPI } from '../../services/api';
 import { FiBookOpen } from 'react-icons/fi';
 
-import StepTrack   from './StepTrack';
+import StepTrack from './StepTrack';
 import StepProfile from './StepProfile';
 import StepPropose from './StepPropose';
 
@@ -169,8 +169,17 @@ export default function Onboarding() {
     }
   };
 
+  const handleWithdraw = async (id) => {
+    try {
+      await dissertationAPI.withdrawProposal(id);
+      setSubmittedProposals(prev => prev.filter(p => p._id !== id));
+    } catch (err) {
+      console.error('Withdraw error:', err);
+    }
+  };
+
   const slideOut = slideDir === 'forward' ? '-translate-x-full opacity-0' : 'translate-x-full opacity-0';
-  const slideIn  = slideDir === 'forward' ? 'translate-x-full opacity-0'  : '-translate-x-full opacity-0';
+  const slideIn = slideDir === 'forward' ? 'translate-x-full opacity-0' : '-translate-x-full opacity-0';
   const stepVisible = (s) => currentStep === s ? 'translate-x-0 opacity-100' : currentStep > s ? slideOut : slideIn;
 
   return (
@@ -178,8 +187,6 @@ export default function Onboarding() {
 
       <div className="flex items-center justify-between px-6 py-4 bg-white/70 backdrop-blur border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <FiBookOpen className="text-blue-600 w-5 h-5" />
-          <span className="font-bold text-gray-800 text-lg">ThesisFlow</span>
         </div>
         <div className="flex items-center gap-3">
           {[1, 2, 3].map((s, i) => (
@@ -225,6 +232,7 @@ export default function Onboarding() {
             onBack={() => goToStep(2)}
             onFinish={finishOnboarding}
             submittedProposals={submittedProposals}
+            onWithdraw={handleWithdraw}
           />
         </div>
       </div>

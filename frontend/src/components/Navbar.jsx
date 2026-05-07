@@ -60,6 +60,12 @@ const Navbar = () => {
                 >
                   Login
                 </Link>
+                <Link
+                  to="/register"
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition"
+                >
+                  Register
+                </Link>
               </>
             )}
           </div>

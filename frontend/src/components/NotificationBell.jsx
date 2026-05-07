@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { notificationAPI } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 import { FiBell, FiX, FiCheck, FiTrash2 } from 'react-icons/fi';
 
 const NotificationBell = () => {
@@ -9,11 +10,40 @@ const NotificationBell = () => {
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef(null);
 
+  const navigate = useNavigate();
+
+  const getNotificationLink = (notification) => {
+    const id = notification.relatedId;
+    switch (notification.type) {
+      case 'proposal_approved': return '/my-dissertation';
+      case 'proposal_rejected': return '/my-proposals';
+      case 'proposal_received': return '/pending-proposals';
+      case 'status_changed': return `/dissertation/${id}`;
+      case 'progress_updated': return `/dissertation/${id}`;
+      case 'dissertation_assigned': return `/dissertation/${id}`;
+      case 'dissertation_deleted': return '/dashboard';
+      case 'comment_added': return '/my-dissertation';
+      default: return null;
+    }
+  };
+
+  const handleNotificationClick = async (notification) => {
+    if (!notification.isRead) {
+      await notificationAPI.markAsRead(notification._id);
+      fetchNotifications();
+    }
+    const link = getNotificationLink(notification);
+    if (link) {
+      setShowDropdown(false);
+      navigate(link);
+    }
+  };
+
   useEffect(() => {
     fetchNotifications();
-    
+
     const interval = setInterval(fetchNotifications, 30000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -61,7 +91,7 @@ const NotificationBell = () => {
 
   const handleClearAll = async () => {
     if (!window.confirm('Are you sure you want to clear all notifications?')) return;
-    
+
     try {
       setLoading(true);
       await notificationAPI.clearAll();
@@ -114,7 +144,7 @@ const NotificationBell = () => {
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
-    
+
     return notifDate.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric'
@@ -174,10 +204,9 @@ const NotificationBell = () => {
                 {notifications.map((notification) => (
                   <div
                     key={notification._id}
-                    className={`p-4 hover:bg-gray-50 transition cursor-pointer ${
-                      !notification.isRead ? 'bg-blue-50' : ''
-                    }`}
-                    onClick={() => !notification.isRead && handleMarkAsRead(notification._id)}
+                    className={`p-4 hover:bg-gray-50 transition cursor-pointer ${!notification.isRead ? 'bg-blue-50' : ''
+                      }`}
+                    onClick={() => handleNotificationClick(notification)}
                   >
                     <div className="flex items-start gap-3">
                       <span className="text-2xl flex-shrink-0">

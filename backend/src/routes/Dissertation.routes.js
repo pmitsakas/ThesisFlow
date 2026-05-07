@@ -6,7 +6,6 @@ const {
   isTeacher,
   isTeacherOrAdmin,
   isStudent,
-  validateDissertationCreate,
   validateProposalCreate,
   validateDissertationUpdate,
   validateAssignDissertation,
@@ -30,12 +29,6 @@ router.get(
 );
 
 router.get(
-  '/supervised/:supervisorId',
-  protect,
-  dissertationController.getSupervisedDissertations
-);
-
-router.get(
   '/pending-proposals',
   protect,
   isTeacher,
@@ -48,6 +41,14 @@ router.post(
   isStudent,
   validateProposalCreate,
   dissertationController.createStudentProposal
+);
+
+router.delete(
+  '/:id/withdraw',
+  protect,
+  isStudent,
+  validateMongoId,
+  dissertationController.withdrawProposal
 );
 
 router.patch(
@@ -73,14 +74,6 @@ router.get(
   dissertationController.getDissertationById
 );
 
-router.post(
-  '/',
-  protect,
-  isTeacher,
-  validateDissertationCreate,
-  dissertationController.createDissertation
-);
-
 router.put(
   '/:id',
   protect,
@@ -96,15 +89,6 @@ router.delete(
   isTeacherOrAdmin,
   validateMongoId,
   dissertationController.deleteDissertation
-);
-
-router.patch(
-  '/:id/assign',
-  protect,
-  isTeacherOrAdmin,
-  validateMongoId,
-  validateAssignDissertation,
-  dissertationController.assignDissertation
 );
 
 router.patch(

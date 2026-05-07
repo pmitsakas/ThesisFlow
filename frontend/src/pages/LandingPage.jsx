@@ -56,7 +56,7 @@ const Slider = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-blue-900/70 via-blue-800/40 to-transparent" />
       </div>
 
-      <div className={`absolute left-10 top-1/2 -translate-y-1/2 max-w-sm transition-opacity duration-300 ${fade ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`absolute left-10 bottom-12 max-w-sm transition-opacity duration-300 ${fade ? 'opacity-100' : 'opacity-0'}`}>
         <h3 className="text-3xl font-bold text-white mb-3">{slide.title}</h3>
         <p className="text-blue-100 text-base leading-relaxed">{slide.text}</p>
       </div>

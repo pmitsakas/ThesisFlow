@@ -42,6 +42,10 @@ export const authAPI = {
   login: (credentials) => api.post('/auth/login', credentials),
   logout: () => api.post('/auth/logout'),
   getMe: () => api.get('/auth/me'),
+  register: (data) => api.post('/auth/register', data),
+  verifyOtp: (data) => api.post('/auth/verify-otp', data),
+  forgotPassword: (data) => api.post('/auth/forgot-password', data),
+  resetPassword: (data) => api.post('/auth/reset-password', data),
 };
 
 export const userAPI = {
@@ -62,17 +66,16 @@ export const dissertationAPI = {
   getAll: () => api.get('/dissertations'),
   getMyDissertations: () => api.get('/dissertations/my-dissertations'),
   getById: (id) => api.get(`/dissertations/${id}`),
-  create: (data) => api.post('/dissertations', data),
   update: (id, data) => api.put(`/dissertations/${id}`, data),
   delete: (id) => api.delete(`/dissertations/${id}`),
-  assign: (id, studentId) => api.patch(`/dissertations/${id}/assign`, { studentId }),
   updateStatus: (id, status) => api.patch(`/dissertations/${id}/status`, { status }),
   updateProgress: (id, progress) => api.patch(`/dissertations/${id}/progress`, { progress_percentage: progress }),
+  withdrawProposal: (id) => api.delete(`/dissertations/${id}/withdraw`),
 
   // Student Proposals
   propose: (data) => api.post('/dissertations/propose', data),
   getPendingProposals: () => api.get('/dissertations/pending-proposals'),
-  approveProposal: (id) => api.patch(`/dissertations/${id}/approve-proposal`),
+  approveProposal: (id, data = {}) => api.patch(`/dissertations/${id}/approve-proposal`, data),
   rejectProposal: (id) => api.patch(`/dissertations/${id}/reject-proposal`),
 };
 

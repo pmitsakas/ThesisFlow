@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const { sendOTPEmail, storeOTP, verifyOTP, sendPasswordResetEmail, storeResetOTP, verifyResetOTP } = require('../services/emailService');
 const jwt = require('jsonwebtoken');
 
 const generateAccessToken = (userId, role) => {
@@ -206,6 +207,169 @@ exports.getMe = async (req, res) => {
         code: 'SERVER_ERROR',
         message: 'An error occurred while fetching user data'
       }
+    });
+  }
+};
+
+exports.register = async (req, res) => {
+  try {
+    const { name, surname, email, password } = req.body;
+
+    const existing = await User.findOne({ email: email.toLowerCase() });
+    if (existing) {
+      return res.status(409).json({
+        success: false,
+        error: { code: 'EMAIL_TAKEN', message: 'An account with this email already exists' }
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    storeOTP(email.toLowerCase(), otp, { name, surname, email: email.toLowerCase(), password });
+    await sendOTPEmail(email, name, otp);
+
+    res.status(200).json({
+      success: true,
+      message: 'OTP sent to your email. Please verify to complete registration.'
+    });
+
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'SERVER_ERROR', message: 'An error occurred during registration' }
+    });
+  }
+};
+
+exports.verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'MISSING_FIELDS', message: 'Email and OTP are required' }
+      });
+    }
+
+    const result = verifyOTP(email.toLowerCase(), otp);
+
+    if (!result.valid) {
+      const messages = {
+        NO_OTP: 'No pending registration found for this email',
+        EXPIRED: 'OTP has expired. Please register again.',
+        INVALID: 'Invalid OTP code'
+      };
+      return res.status(400).json({
+        success: false,
+        error: { code: result.reason, message: messages[result.reason] }
+      });
+    }
+
+    const existing = await User.findOne({ email: result.userData.email });
+    if (existing) {
+      return res.status(409).json({
+        success: false,
+        error: { code: 'EMAIL_TAKEN', message: 'An account with this email already exists' }
+      });
+    }
+
+    const user = await User.create({
+      ...result.userData,
+      role: 'student'
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Account created successfully. You can now log in.',
+      data: user.toPublicJSON()
+    });
+
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'SERVER_ERROR', message: 'An error occurred during verification' }
+    });
+  }
+};
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        message: 'If this email exists, an OTP has been sent.'
+      });
+    }
+
+    if (!user.is_active) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'ACCOUNT_DEACTIVATED', message: 'This account has been deactivated.' }
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    storeResetOTP(email.toLowerCase(), otp);
+    await sendPasswordResetEmail(email, user.name, otp);
+
+    res.status(200).json({
+      success: true,
+      message: 'If this email exists, an OTP has been sent.'
+    });
+
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'SERVER_ERROR', message: 'An error occurred' }
+    });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    const result = verifyResetOTP(email.toLowerCase(), otp);
+
+    if (!result.valid) {
+      const messages = {
+        NO_OTP: 'No password reset request found for this email.',
+        EXPIRED: 'OTP has expired. Please request a new one.',
+        INVALID: 'Invalid OTP code.'
+      };
+      return res.status(400).json({
+        success: false,
+        error: { code: result.reason, message: messages[result.reason] }
+      });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'USER_NOT_FOUND', message: 'User not found.' }
+      });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successfully. You can now log in.'
+    });
+
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'SERVER_ERROR', message: 'An error occurred' }
     });
   }
 };

@@ -2,6 +2,7 @@ const Comment = require('../models/Comment');
 const Dissertation = require('../models/Dissertation');
 const User = require('../models/User');
 const { sendNewCommentEmail } = require('../services/emailService');
+const Notification = require('../models/Notification');
 
 exports.getCommentsByDissertation = async (req, res) => {
   try {
@@ -120,21 +121,42 @@ exports.createComment = async (req, res) => {
     });
 
     setImmediate(async () => {
-      try {
-        const commenter = await User.findById(userId).select('name surname');
-        const commenterName = `${commenter.name} ${commenter.surname}`;
-        const isSup = dissertation.supervisorId.toString() === userId.toString();
-        if (isSup && dissertation.studentId) {
-          const student = await User.findById(dissertation.studentId).select('name email');
-          if (student) await sendNewCommentEmail(student.email, student.name, commenterName, dissertation.title, dissertationId);
-        } else if (!isSup) {
-          const supervisor = await User.findById(dissertation.supervisorId).select('name email');
-          if (supervisor) await sendNewCommentEmail(supervisor.email, supervisor.name, commenterName, dissertation.title, dissertationId);
-        }
-      } catch (e) {
-        console.error('Email send error (comment):', e);
+  try {
+    const commenter = await User.findById(userId).select('name surname');
+    const commenterName = `${commenter.name} ${commenter.surname}`;
+    const isSup = dissertation.supervisorId.toString() === userId.toString();
+
+    if (isSup && dissertation.studentId) {
+      const student = await User.findById(dissertation.studentId).select('name email');
+      if (student) {
+        await sendNewCommentEmail(student.email, student.name, commenterName, dissertation.title, dissertationId);
+        await Notification.createNotification({
+          userId: dissertation.studentId,
+          type: 'comment_added',
+          title: 'Νέο σχόλιο',
+          message: `Ο/Η ${commenterName} πρόσθεσε σχόλιο στην εργασία "${dissertation.title}"`,
+          relatedId: dissertationId,
+          relatedModel: 'Dissertation'
+        });
       }
-    });
+    } else if (!isSup) {
+      const supervisor = await User.findById(dissertation.supervisorId).select('name email');
+      if (supervisor) {
+        await sendNewCommentEmail(supervisor.email, supervisor.name, commenterName, dissertation.title, dissertationId);
+        await Notification.createNotification({
+          userId: dissertation.supervisorId,
+          type: 'comment_added',
+          title: 'Νέο σχόλιο',
+          message: `Ο/Η ${commenterName} πρόσθεσε σχόλιο στην εργασία "${dissertation.title}"`,
+          relatedId: dissertationId,
+          relatedModel: 'Dissertation'
+        });
+      }
+    }
+  } catch (e) {
+    console.error('Notification/Email error (comment):', e);
+  }
+});
 
   } catch (error) {
     console.error('Create comment error:', error);

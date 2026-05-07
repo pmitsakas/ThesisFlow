@@ -81,110 +81,6 @@ exports.getDissertationById = async (req, res) => {
   }
 };
 
-exports.createDissertation = async (req, res) => {
-  try {
-    const { code, tracks, title, description, deadline, supervisorId } = req.body;
-
-    if (!code || !tracks || !title || !supervisorId) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'MISSING_FIELDS',
-          message: 'Please provide all required fields: code, tracks, title, supervisorId'
-        }
-      });
-    }
-
-    const existingCode = await Dissertation.findOne({ code: code.trim() });
-    if (existingCode) {
-      return res.status(409).json({
-        success: false,
-        error: {
-          code: 'DUPLICATE_CODE',
-          message: 'A dissertation with this code already exists'
-        }
-      });
-    }
-
-    const supervisor = await User.findById(supervisorId);
-
-    if (!supervisor) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'SUPERVISOR_NOT_FOUND',
-          message: 'Supervisor not found'
-        }
-      });
-    }
-
-    if (supervisor.role !== 'teacher') {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'INVALID_SUPERVISOR',
-          message: 'Supervisor must be a teacher'
-        }
-      });
-    }
-
-    const dissertationData = {
-      code: code.trim(),
-      tracks,
-      title,
-      description,
-      supervisorId,
-      status: 'available'
-    };
-    if (deadline) {
-      dissertationData.deadline = deadline;
-    }
-
-    const dissertation = await Dissertation.create(dissertationData);
-
-    const populatedDissertation = await Dissertation.findById(dissertation._id)
-      .populate('supervisorId', 'name surname email');
-
-    res.status(201).json({
-      success: true,
-      data: populatedDissertation
-    });
-
-  } catch (error) {
-    console.error('Create dissertation error:', error);
-
-    if (error.code === 11000) {
-      return res.status(409).json({
-        success: false,
-        error: {
-          code: 'DUPLICATE_CODE',
-          message: 'A dissertation with this code already exists'
-        }
-      });
-    }
-
-    if (error.name === 'ValidationError') {
-      const errors = Object.values(error.errors).map(err => err.message);
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Validation failed',
-          details: errors
-        }
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'SERVER_ERROR',
-        message: 'An error occurred while creating dissertation'
-      }
-    });
-  }
-};
-
 exports.updateDissertation = async (req, res) => {
   try {
     const { id } = req.params;
@@ -321,118 +217,7 @@ exports.deleteDissertation = async (req, res) => {
   }
 };
 
-exports.assignDissertation = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { studentId } = req.body;
 
-    if (!studentId) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'MISSING_STUDENT_ID',
-          message: 'Student ID is required'
-        }
-      });
-    }
-
-    const dissertation = await Dissertation.findById(id);
-
-    if (!dissertation) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'DISSERTATION_NOT_FOUND',
-          message: 'Dissertation not found'
-        }
-      });
-    }
-
-    if (dissertation.status !== 'available' && dissertation.status !== 'pending_approval') {
-      return res.status(409).json({
-        success: false,
-        error: {
-          code: 'INVALID_STATUS',
-          message: 'Dissertation must be available or pending approval to be assigned'
-        }
-      });
-    }
-
-    const student = await User.findById(studentId);
-
-    if (!student) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'STUDENT_NOT_FOUND',
-          message: 'Student not found'
-        }
-      });
-    }
-
-    if (student.role !== 'student') {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'INVALID_ROLE',
-          message: 'User must be a student'
-        }
-      });
-    }
-
-    const existingAssignment = await Dissertation.findOne({
-      studentId: studentId,
-      status: 'assigned'
-    });
-
-    if (existingAssignment) {
-      return res.status(409).json({
-        success: false,
-        error: {
-          code: 'STUDENT_ALREADY_ASSIGNED',
-          message: 'Student already has an assigned dissertation'
-        }
-      });
-    }
-
-    dissertation.studentId = studentId;
-    dissertation.status = 'assigned';
-    dissertation.date_started = new Date();
-
-    await dissertation.save();
-
-    const updatedDissertation = await Dissertation.findById(id)
-      .populate('supervisorId', 'name surname email')
-      .populate('studentId', 'name surname email');
-
-    res.status(200).json({
-      success: true,
-      data: updatedDissertation,
-      message: 'Dissertation assigned successfully'
-    });
-
-  } catch (error) {
-    console.error('Assign dissertation error:', error);
-
-    if (error.name === 'CastError') {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'INVALID_ID',
-          message: 'Invalid ID format'
-        }
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'SERVER_ERROR',
-        message: 'An error occurred while assigning dissertation'
-      }
-    });
-  }
-};
 
 exports.updateStatus = async (req, res) => {
   try {
@@ -600,7 +385,7 @@ exports.getMyDissertations = async (req, res) => {
     if (userRole === 'student') {
       dissertations = await Dissertation.find({
         studentId: userId,
-        status: 'assigned'
+        status: { $in: ['assigned', 'pending_approval'] }
       })
         .populate('supervisorId', 'name surname email')
         .sort({ date_created: -1 });
@@ -625,30 +410,6 @@ exports.getMyDissertations = async (req, res) => {
       error: {
         code: 'SERVER_ERROR',
         message: 'An error occurred while fetching dissertations'
-      }
-    });
-  }
-};
-
-exports.getSupervisedDissertations = async (req, res) => {
-  try {
-    const { supervisorId } = req.params;
-
-    const dissertations = await Dissertation.findBySupervisor(supervisorId);
-
-    res.status(200).json({
-      success: true,
-      count: dissertations.length,
-      data: dissertations
-    });
-
-  } catch (error) {
-    console.error('Get supervised dissertations error:', error);
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'SERVER_ERROR',
-        message: 'An error occurred while fetching supervised dissertations'
       }
     });
   }
@@ -799,6 +560,7 @@ exports.getPendingProposals = async (req, res) => {
 exports.approveProposal = async (req, res) => {
   try {
     const { id } = req.params;
+    const { title, description } = req.body;
 
     const dissertation = await Dissertation.findById(id)
       .populate('supervisorId', 'name surname email')
@@ -869,6 +631,8 @@ exports.approveProposal = async (req, res) => {
 
     dissertation.status = 'assigned';
     dissertation.date_started = new Date();
+    if (title) dissertation.title = title;
+    if (description) dissertation.description = description;
     await dissertation.save();
 
     await Dissertation.deleteMany({
@@ -993,6 +757,47 @@ exports.rejectProposal = async (req, res) => {
         code: 'SERVER_ERROR',
         message: 'An error occurred while rejecting proposal'
       }
+    });
+  }
+};
+
+exports.withdrawProposal = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const studentId = req.user.userId;
+
+    const dissertation = await Dissertation.findById(id);
+
+    if (!dissertation) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Proposal not found' }
+      });
+    }
+
+    if (dissertation.studentId.toString() !== studentId.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'ACCESS_DENIED', message: 'This is not your proposal' }
+      });
+    }
+
+    if (dissertation.status !== 'pending_approval') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_STATUS', message: 'Only pending proposals can be withdrawn' }
+      });
+    }
+
+    await Dissertation.findByIdAndDelete(id);
+
+    res.status(200).json({ success: true, message: 'Proposal withdrawn successfully' });
+
+  } catch (error) {
+    console.error('Withdraw proposal error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'SERVER_ERROR', message: 'An error occurred while withdrawing proposal' }
     });
   }
 };

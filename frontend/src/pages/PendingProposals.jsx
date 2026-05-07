@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { dissertationAPI } from '../services/api';
-import { FiClock, FiUser, FiCalendar, FiCheckCircle, FiXCircle } from 'react-icons/fi';
+import { FiClock, FiUser, FiCheckCircle, FiXCircle, FiEdit2 } from 'react-icons/fi';
 
 const PendingProposals = () => {
   const [proposals, setProposals] = useState([]);
@@ -8,9 +8,7 @@ const PendingProposals = () => {
   const [error, setError] = useState('');
   const [processing, setProcessing] = useState(null);
 
-  useEffect(() => {
-    fetchProposals();
-  }, []);
+  useEffect(() => { fetchProposals(); }, []);
 
   const fetchProposals = async () => {
     try {
@@ -20,20 +18,15 @@ const PendingProposals = () => {
       setError('');
     } catch (err) {
       setError('Failed to load proposals');
-      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApprove = async (proposalId) => {
-    if (!window.confirm('Are you sure you want to approve this proposal? The dissertation will be automatically assigned to the student.')) {
-      return;
-    }
-
+  const handleApprove = async (proposalId, editedData) => {
     try {
       setProcessing(proposalId);
-      await dissertationAPI.approveProposal(proposalId);
+      await dissertationAPI.approveProposal(proposalId, editedData);
       fetchProposals();
     } catch (err) {
       alert(err.response?.data?.error?.message || 'Failed to approve proposal');
@@ -43,10 +36,7 @@ const PendingProposals = () => {
   };
 
   const handleReject = async (proposalId) => {
-    if (!window.confirm('Are you sure you want to reject this proposal? This action cannot be undone.')) {
-      return;
-    }
-
+    if (!window.confirm('Are you sure you want to reject this proposal?')) return;
     try {
       setProcessing(proposalId);
       await dissertationAPI.rejectProposal(proposalId);
@@ -58,13 +48,11 @@ const PendingProposals = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -75,9 +63,7 @@ const PendingProposals = () => {
         </div>
 
         {error && (
-          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-            {error}
-          </div>
+          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>
         )}
 
         {proposals.length === 0 ? (
@@ -88,11 +74,11 @@ const PendingProposals = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            {proposals.map((proposal) => (
+            {proposals.map(proposal => (
               <ProposalCard
                 key={proposal._id}
                 proposal={proposal}
-                onApprove={() => handleApprove(proposal._id)}
+                onApprove={handleApprove}
                 onReject={() => handleReject(proposal._id)}
                 isProcessing={processing === proposal._id}
               />
@@ -105,82 +91,132 @@ const PendingProposals = () => {
 };
 
 const ProposalCard = ({ proposal, onApprove, onReject, isProcessing }) => {
+  const [editMode, setEditMode] = useState(false);
+  const [title, setTitle] = useState(proposal.title);
+  const [description, setDescription] = useState(proposal.description || '');
+
+  const handleConfirmApprove = () => {
+    onApprove(proposal._id, { title, description });
+    setEditMode(false);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition">
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex flex-wrap gap-1">
-                {proposal.tracks && proposal.tracks.map(t => (
-                  <span key={t} className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                    t === 'AI&DS' ? 'bg-red-100 text-red-800' :
+            <div className="flex items-center gap-2 mb-3">
+              {proposal.tracks && proposal.tracks.map(t => (
+                <span key={t} className={`px-3 py-1 text-xs font-semibold rounded-full ${t === 'AI&DS' ? 'bg-red-100 text-red-800' :
                     t === 'WT' ? 'bg-blue-100 text-blue-800' :
-                    'bg-green-100 text-green-800'
+                      'bg-green-100 text-green-800'
                   }`}>{t}</span>
-                ))}
-              </div>
+              ))}
               <span className="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 flex items-center gap-1">
-                <FiClock className="w-3 h-3" />
-                Pending Review
+                <FiClock className="w-3 h-3" /> Pending Review
               </span>
+              {editMode && (
+                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 flex items-center gap-1">
+                  <FiEdit2 className="w-3 h-3" /> Edit Mode
+                </span>
+              )}
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">{proposal.title}</h3>
+
+            {editMode ? (
+              <input
+                type="text"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                maxLength={200}
+                className="w-full text-xl font-bold text-gray-900 border-b-2 border-blue-400 focus:outline-none bg-blue-50 px-2 py-1 rounded-t mb-2"
+              />
+            ) : (
+              <h3 className="text-xl font-bold text-gray-900 mb-3">{proposal.title}</h3>
+            )}
           </div>
         </div>
 
-        {proposal.description && (
-          <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-            <h4 className="text-sm font-semibold text-gray-700 mb-2">Description</h4>
+        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+          <h4 className="text-sm font-semibold text-gray-700 mb-2">Description</h4>
+          {editMode ? (
+            <textarea
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              maxLength={3000}
+              rows={Math.max(5, description.split('\n').length + 2)}
+              style={{ minHeight: '120px' }}
+              className="w-full text-sm text-gray-700 border border-blue-400 focus:outline-none bg-blue-50 px-2 py-1 rounded resize-y"
+            />
+          ) : (
             <p className="text-sm text-gray-600 whitespace-pre-wrap">{proposal.description}</p>
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pt-4 border-t border-gray-200">
           <div className="flex items-center text-sm text-gray-600">
             <FiUser className="w-4 h-4 mr-2 text-gray-400" />
             <div>
               <p className="text-xs text-gray-500">Student</p>
-              <p className="font-medium text-gray-900">
-                {proposal.studentId?.name} {proposal.studentId?.surname}
-              </p>
+              <p className="font-medium text-gray-900">{proposal.studentId?.name} {proposal.studentId?.surname}</p>
               <p className="text-xs text-gray-500">{proposal.studentId?.email}</p>
             </div>
           </div>
-
           <div className="flex items-center text-sm text-gray-600">
             <FiClock className="w-4 h-4 mr-2 text-gray-400" />
             <div>
               <p className="text-xs text-gray-500">Submitted</p>
               <p className="font-medium text-gray-900">
-                {new Date(proposal.date_created).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric'
-                })}
+                {new Date(proposal.date_created).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex gap-3">
-          <button
-            onClick={onApprove}
-            disabled={isProcessing}
-            className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            <FiCheckCircle className="w-4 h-4" />
-            {isProcessing ? 'Processing...' : 'Approve & Assign'}
-          </button>
-          <button
-            onClick={onReject}
-            disabled={isProcessing}
-            className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            <FiXCircle className="w-4 h-4" />
-            {isProcessing ? 'Processing...' : 'Reject'}
-          </button>
-        </div>
+        {editMode ? (
+          <div className="flex gap-3">
+            <button
+              onClick={handleConfirmApprove}
+              disabled={isProcessing || !title}
+              className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <FiCheckCircle className="w-4 h-4" />
+              {isProcessing ? 'Processing...' : 'Confirm & Approve'}
+            </button>
+            <button
+              onClick={() => { setEditMode(false); setTitle(proposal.title); setDescription(proposal.description || ''); }}
+              className="px-4 py-2 border border-gray-300 text-gray-600 hover:bg-gray-50 rounded-lg transition text-sm font-medium"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-3">
+            <button
+              onClick={() => setEditMode(true)}
+              disabled={isProcessing}
+              className="flex-1 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg transition text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <FiEdit2 className="w-4 h-4" />
+              Edit & Approve
+            </button>
+            <button
+              onClick={() => onApprove(proposal._id, {})}
+              disabled={isProcessing}
+              className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <FiCheckCircle className="w-4 h-4" />
+              {isProcessing ? 'Processing...' : 'Approve'}
+            </button>
+            <button
+              onClick={onReject}
+              disabled={isProcessing}
+              className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <FiXCircle className="w-4 h-4" />
+              {isProcessing ? 'Processing...' : 'Reject'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

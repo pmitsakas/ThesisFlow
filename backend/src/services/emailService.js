@@ -10,6 +10,46 @@ const transporter = nodemailer.createTransport({
 
 const BASE_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
+const otpStore = new Map();
+
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+const storeOTP = (email, otp, userData) => {
+  otpStore.set(email, {
+    otp,
+    userData,
+    expiresAt: Date.now() + 10 * 60 * 1000
+  });
+};
+
+const verifyOTP = (email, otp) => {
+  const entry = otpStore.get(email);
+  if (!entry) return { valid: false, reason: 'NO_OTP' };
+  if (Date.now() > entry.expiresAt) {
+    otpStore.delete(email);
+    return { valid: false, reason: 'EXPIRED' };
+  }
+  if (entry.otp !== otp && entry.otp !== '__verified__') return { valid: false, reason: 'INVALID' };
+  if (entry.otp === '__verified__' && otp !== '__verify_only__') {
+    resetOtpStore.delete(email);
+    return { valid: true };
+  }
+  const userData = entry.userData;
+  otpStore.delete(email);
+  return { valid: true, userData };
+};
+
+const sendOTPEmail = async (email, name, otp) => {
+  const content = `
+    <p style="color:#374151;font-size:16px;margin:0 0 16px;">Γεια σου <strong>${name}</strong>,</p>
+    <p style="color:#6b7280;font-size:15px;margin:0 0 24px;">Χρησιμοποίησε τον παρακάτω κωδικό για να ολοκληρώσεις την εγγραφή σου στο ThesisFlow:</p>
+    <div style="background:#f0f4ff;border-left:4px solid #667eea;border-radius:8px;padding:28px;margin-bottom:28px;text-align:center;">
+      <p style="color:#667eea;font-size:36px;font-weight:800;letter-spacing:10px;margin:0;">${otp}</p>
+    </div>
+    <p style="color:#9ca3af;font-size:13px;text-align:center;">Ο κωδικός λήγει σε <strong>10 λεπτά</strong>. Αν δεν έκανες εγγραφή, αγνόησε αυτό το email.</p>`;
+  await sendEmail(email, '🔐 Κωδικός επαλήθευσης ThesisFlow', baseTemplate(content));
+};
+
 const baseTemplate = (content) => `
 <!DOCTYPE html>
 <html lang="el">
@@ -119,9 +159,47 @@ const sendNewFileEmail = async (recipientEmail, recipientName, uploaderName, dis
   await sendEmail(recipientEmail, `📎 Νέο αρχείο από ${uploaderName}`, baseTemplate(content));
 };
 
+const resetOtpStore = new Map();
+
+const storeResetOTP = (email, otp) => {
+  resetOtpStore.set(email, {
+    otp,
+    expiresAt: Date.now() + 10 * 60 * 1000
+  });
+};
+
+const verifyResetOTP = (email, otp) => {
+  const entry = resetOtpStore.get(email);
+  if (!entry) return { valid: false, reason: 'NO_OTP' };
+  if (Date.now() > entry.expiresAt) {
+    resetOtpStore.delete(email);
+    return { valid: false, reason: 'EXPIRED' };
+  }
+  if (entry.otp !== otp) return { valid: false, reason: 'INVALID' };
+  resetOtpStore.set(email, { ...entry, verified: true, otp: '__verified__' });
+  return { valid: true };
+};
+
+const sendPasswordResetEmail = async (email, name, otp) => {
+  const content = `
+    <p style="color:#374151;font-size:16px;margin:0 0 16px;">Γεια σου <strong>${name}</strong>,</p>
+    <p style="color:#6b7280;font-size:15px;margin:0 0 24px;">Λάβαμε αίτημα επαναφοράς κωδικού για τον λογαριασμό σου. Χρησιμοποίησε τον παρακάτω κωδικό:</p>
+    <div style="background:#fff7ed;border-left:4px solid #f97316;border-radius:8px;padding:28px;margin-bottom:28px;text-align:center;">
+      <p style="color:#ea580c;font-size:36px;font-weight:800;letter-spacing:10px;margin:0;">${otp}</p>
+    </div>
+    <p style="color:#9ca3af;font-size:13px;text-align:center;">Ο κωδικός λήγει σε <strong>10 λεπτά</strong>. Αν δεν ζήτησες επαναφορά κωδικού, αγνόησε αυτό το email.</p>`;
+  await sendEmail(email, '🔑 Επαναφορά κωδικού ThesisFlow', baseTemplate(content));
+};
+
 module.exports = {
   sendProposalApprovedEmail,
   sendProposalRejectedEmail,
   sendNewCommentEmail,
-  sendNewFileEmail
+  sendNewFileEmail,
+  sendOTPEmail,
+  storeOTP,
+  verifyOTP,
+  sendPasswordResetEmail,
+  storeResetOTP,
+  verifyResetOTP
 };

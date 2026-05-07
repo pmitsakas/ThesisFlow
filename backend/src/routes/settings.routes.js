@@ -22,14 +22,6 @@ router.get(
 );
 
 router.post(
-  '/deadline/global',
-  protect,
-  isAdmin,
-  validateSetDeadline,
-  settingsController.setGlobalDeadline
-);
-
-router.post(
   '/initialize',
   protect,
   isAdmin,
