@@ -3,7 +3,7 @@ import { dissertationAPI, userAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
   FiClock, FiCheckCircle, FiUser, FiCalendar,
-  FiZap, FiLoader, FiPlus, FiEdit3, FiInfo, FiX
+  FiZap, FiLoader, FiPlus, FiEdit3, FiInfo, FiX, FiMaximize2
 } from 'react-icons/fi';
 
 const TRACK_COLORS = {
@@ -31,6 +31,7 @@ const MyProposals = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [profile, setProfile] = useState(null);
+  const [editingDesc, setEditingDesc] = useState(false);
 
   const [teachers, setTeachers] = useState([]);
   const [propForm, setPropForm] = useState({ title: '', description: '', supervisorId: '' });
@@ -39,6 +40,7 @@ const MyProposals = () => {
   const [propError, setPropError] = useState('');
   const [propSuccess, setPropSuccess] = useState('');
   const [showPrompt, setShowPrompt] = useState(false);
+  const [showDescModal, setShowDescModal] = useState(false);
   const teachersLoaded = useRef(false);
 
   const today = new Date().toISOString().slice(0, 10);
@@ -120,7 +122,7 @@ const MyProposals = () => {
   };
 
   const handleWithdraw = async (id) => {
-    if (!window.confirm('Είσαι σίγουρος ότι θέλεις να αποσύρεις αυτήν την πρόταση;')) return;
+    if (!window.confirm('Are you sure you want to withdraw this proposal?')) return;
     try {
       await dissertationAPI.withdrawProposal(id);
       setProposals(prev => prev.filter(p => p._id !== id));
@@ -154,6 +156,77 @@ const MyProposals = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+
+      {showDescModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h3 className="font-semibold text-gray-800 text-lg">Proposal Description</h3>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEditingDesc(e => !e)}
+                  className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 transition px-2 py-1 rounded-lg hover:bg-blue-50"
+                >
+                  <FiEdit3 className="w-3 h-3" />
+                  {editingDesc ? 'Cancel edit' : 'Edit'}
+                </button>
+                <button onClick={() => { setShowDescModal(false); setEditingDesc(false); }} className="text-gray-400 hover:text-gray-600 transition">
+                  <FiX className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div className="px-6 py-5 overflow-y-auto flex-1 space-y-4">
+              {editingDesc ? (
+                <>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Title</label>
+                    <input
+                      type="text"
+                      value={propForm.title}
+                      onChange={e => setPropForm(p => ({ ...p, title: e.target.value }))}
+                      maxLength={200}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
+                    <textarea
+                      value={propForm.description}
+                      onChange={e => setPropForm(p => ({ ...p, description: e.target.value }))}
+                      maxLength={4000}
+                      rows={10}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    />
+                    <p className="text-xs text-gray-400 text-right mt-0.5">{propForm.description?.length || 0}/4000</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h4 className="font-semibold text-gray-900">{propForm.title || '-'}</h4>
+                  <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">{propForm.description || '-'}</p>
+                </>
+              )}
+            </div>
+            <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
+              {editingDesc && (
+                <button
+                  onClick={() => setEditingDesc(false)}
+                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition"
+                >
+                  Done
+                </button>
+              )}
+              <button
+                onClick={() => { setShowDescModal(false); setEditingDesc(false); }}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">My Proposals</h1>
@@ -166,7 +239,6 @@ const MyProposals = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-          {/* Left: new proposal form */}
           <div>
             <div className="bg-white rounded-xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-5">
@@ -181,7 +253,6 @@ const MyProposals = () => {
                     type="button"
                     onClick={handleGenerateAI}
                     disabled={generatingAI}
-                    onMouseEnter={() => setShowPrompt(true)}
                     className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${generatingAI
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md hover:shadow-lg hover:scale-105'
@@ -189,7 +260,7 @@ const MyProposals = () => {
                   >
                     <span className="relative flex items-center gap-2">
                       {generatingAI
-                        ? <><FiLoader className="w-4 h-4 animate-spin" /> Δημιουργία...</>
+                        ? <><FiLoader className="w-4 h-4 animate-spin" /> Create...</>
                         : <><FiZap className="w-4 h-4 animate-bounce" /> Generate with AI</>
                       }
                     </span>
@@ -233,19 +304,31 @@ const MyProposals = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Description <span className="text-red-500">*</span>
+                    </label>
+                    {propForm.description && (
+                      <button
+                        type="button"
+                        onClick={() => setShowDescModal(true)}
+                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 transition"
+                      >
+                        <FiMaximize2 className="w-3 h-3" />
+                        Full preview
+                      </button>
+                    )}
+                  </div>
                   <textarea
                     value={propForm.description}
                     onChange={e => setPropForm(p => ({ ...p, description: e.target.value }))}
-                    maxLength={3000}
-                    rows={5}
+                    maxLength={4000}
+                    rows={7}
                     placeholder="Describe your proposed dissertation topic..."
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                     required
                   />
-                  <p className="mt-1 text-xs text-gray-400">{propForm.description.length}/3000</p>
+                  <p className="mt-1 text-xs text-gray-400 text-right">{propForm.description.length}/4000</p>
                 </div>
 
                 <div>
@@ -279,7 +362,6 @@ const MyProposals = () => {
             </div>
           </div>
 
-          {/* Right: existing proposals */}
           <div>
             <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
               <FiClock className="text-yellow-500 w-5 h-5" />
@@ -299,21 +381,23 @@ const MyProposals = () => {
                     <div className="p-5">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
-                          <button
-                            type="button"
-                            onClick={() => handleWithdraw(proposal._id)}
-                            className="text-gray-300 hover:text-red-500 transition flex-shrink-0 ml-2"
-                            title="Απόσυρση πρότασης"
-                          >
-                            <FiX className="w-4 h-4" />
-                          </button>
-                          <div className="flex flex-wrap gap-1 mb-2">
-                            {proposal.tracks && proposal.tracks.map(t => (
-                              <span key={t} className={`px-2 py-0.5 text-xs font-semibold rounded-full ${TRACK_COLORS[t] || 'bg-gray-100 text-gray-700'}`}>{t}</span>
-                            ))}
-                            <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 flex items-center gap-1">
-                              <FiClock className="w-3 h-3" /> Pending Review
-                            </span>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex flex-wrap gap-1">
+                              {proposal.tracks && proposal.tracks.map(t => (
+                                <span key={t} className={`px-2 py-0.5 text-xs font-semibold rounded-full ${TRACK_COLORS[t] || 'bg-gray-100 text-gray-700'}`}>{t}</span>
+                              ))}
+                              <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 flex items-center gap-1">
+                                <FiClock className="w-3 h-3" /> Pending Review
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleWithdraw(proposal._id)}
+                              className="text-gray-300 hover:text-red-500 transition flex-shrink-0 ml-2"
+                              title="Remove proposal"
+                            >
+                              <FiX className="w-4 h-4" />
+                            </button>
                           </div>
                           <h3 className="font-bold text-gray-900 leading-snug">{proposal.title}</h3>
                           {proposal.description && (

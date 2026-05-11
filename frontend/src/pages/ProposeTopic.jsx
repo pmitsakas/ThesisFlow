@@ -101,7 +101,7 @@ const ProposeTopic = () => {
     formData.tracks.length > 0 &&
     formData.title.length >= 10 &&
     formData.title.length <= 200 &&
-    formData.description.length <= 3000 &&
+    formData.description.length <= 4000 &&
     formData.supervisorId;
 
   if (hasActiveDissertation) {
@@ -228,11 +228,11 @@ const ProposeTopic = () => {
                   value={formData.description}
                   onChange={handleChange}
                   rows="6"
-                  maxLength="3000"
+                  maxLength="4000"
                   placeholder="Describe your proposed dissertation topic, objectives, methodology, and expected outcomes..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 />
-                <p className="mt-1 text-xs text-gray-500">{formData.description.length}/3000 characters</p>
+                <p className="mt-1 text-xs text-gray-500">{formData.description.length}/4000 characters</p>
               </div>
 
               <div>

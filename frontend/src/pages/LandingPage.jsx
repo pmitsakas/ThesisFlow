@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { tw } from '../theme';
 import studentsImg from '../assets/students.jpg';
 import teachersImg from '../assets/teachers.jpg';
 import adminImg from '../assets/administration.webp';
@@ -9,18 +10,25 @@ const SLIDES = [
   {
     image: studentsImg,
     title: 'For Students',
-    text: 'Browse available dissertation topics, apply for topics that match your interests, and track your progress throughout your research journey.'
+    text: 'Submit dissertation proposals, collaborate with your supervisor, and track your progress throughout your research journey.'
   },
   {
     image: teachersImg,
     title: 'For Teachers',
-    text: 'Create and manage dissertation topics, supervise multiple students, monitor progress, and provide feedback throughout the research process.'
+    text: 'Review student proposals, supervise dissertations, provide feedback and monitor progress across all your students.'
   },
   {
     image: adminImg,
     title: 'For Admins',
-    text: 'Oversee the entire system, manage users and permissions, generate reports, and configure system-wide settings and deadlines.'
+    text: 'Oversee the entire system, manage users and permissions, and configure system-wide settings.'
   },
+];
+
+const FEATURES = [
+  { icon: '📋', title: 'Proposal Management', text: 'Students submit proposals, supervisors review and approve with full edit control.' },
+  { icon: '🤖', title: 'AI-Assisted Proposals', text: 'Generate dissertation proposals instantly using AI based on your academic profile.' },
+  { icon: '💬', title: 'Collaboration', text: 'Real-time comments and file sharing between students and supervisors.' },
+  { icon: '📊', title: 'Progress Tracking', text: 'Monitor dissertation progress with visual indicators and status updates.' },
 ];
 
 const Slider = () => {
@@ -30,10 +38,7 @@ const Slider = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setFade(false);
-      setTimeout(() => {
-        setCurrent(prev => (prev + 1) % SLIDES.length);
-        setFade(true);
-      }, 300);
+      setTimeout(() => { setCurrent(prev => (prev + 1) % SLIDES.length); setFade(true); }, 300);
     }, 4000);
     return () => clearInterval(timer);
   }, []);
@@ -44,43 +49,36 @@ const Slider = () => {
     setTimeout(() => { setCurrent(idx); setFade(true); }, 300);
   };
 
-  const prev = () => goTo((current - 1 + SLIDES.length) % SLIDES.length);
-  const next = () => goTo((current + 1) % SLIDES.length);
-
   const slide = SLIDES[current];
 
   return (
-    <div className="relative w-full rounded-2xl overflow-hidden shadow-xl" style={{ height: '500px' }}>
+    <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl" style={{ height: '480px' }}>
       <div className={`absolute inset-0 transition-opacity duration-300 ${fade ? 'opacity-100' : 'opacity-0'}`}>
         <img src={slide.image} alt={slide.title} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/70 via-blue-800/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0d1b6e]/85 via-[#1a237e]/60 to-transparent" />
       </div>
 
-      <div className={`absolute left-10 bottom-12 max-w-sm transition-opacity duration-300 ${fade ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`absolute left-10 bottom-12 max-w-md transition-opacity duration-300 ${fade ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="w-12 h-1 bg-[#f26522] mb-4 rounded-full" />
         <h3 className="text-3xl font-bold text-white mb-3">{slide.title}</h3>
         <p className="text-blue-100 text-base leading-relaxed">{slide.text}</p>
       </div>
 
       <button
-        onClick={prev}
-        className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition backdrop-blur-sm"
-      >
-        ‹
-      </button>
+        onClick={() => goTo((current - 1 + SLIDES.length) % SLIDES.length)}
+        className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 hover:bg-[#f26522]/80 text-white flex items-center justify-center transition backdrop-blur-sm text-xl"
+      >‹</button>
       <button
-        onClick={next}
-        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition backdrop-blur-sm"
-      >
-        ›
-      </button>
+        onClick={() => goTo((current + 1) % SLIDES.length)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 hover:bg-[#f26522]/80 text-white flex items-center justify-center transition backdrop-blur-sm text-xl"
+      >›</button>
 
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
         {SLIDES.map((_, i) => (
           <button
             key={i}
             onClick={() => goTo(i)}
-            className={`rounded-full transition-all duration-300 ${i === current ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/50 hover:bg-white/80'
-              }`}
+            className={`rounded-full transition-all duration-300 ${i === current ? 'w-6 h-2 bg-[#f26522]' : 'w-2 h-2 bg-white/50 hover:bg-white/80'}`}
           />
         ))}
       </div>
@@ -92,52 +90,72 @@ const LandingPage = () => {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center">
-          <h1 className="text-5xl font-extrabold text-gray-900 sm:text-6xl md:text-7xl">
-            Dissertation
-            <span className="text-blue-600"> Administration</span>
-          </h1>
-          <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
-            Streamline your dissertation management process with our comprehensive system.
-            Track progress, collaborate with supervisors, and manage deadlines efficiently.
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#f5f5f5]">
 
-        <div className="mt-14">
-          <Slider />
-          <div className="mt-8 flex justify-center">
-            {user ? (
-              <Link
-                to="/dashboard"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-lg font-semibold shadow-lg transform hover:scale-105 transition"
-              >
-                Go to Dashboard
-              </Link>
-            ) : (
-              <Link
-                to="/login"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-lg font-semibold shadow-lg transform hover:scale-105 transition"
-              >
-                Login
+      <div className="bg-[#1a237e] text-white py-20 px-4">
+        <div className="max-w-7xl mx-auto text-center">
+          <h1 className="text-5xl sm:text-6xl font-extrabold mb-6 leading-tight">
+            Dissertation
+            <span className="text-[#f26522]"> Administration</span>
+          </h1>
+          <p className="text-lg text-blue-100 max-w-2xl mx-auto mb-10">
+            A comprehensive platform for managing undergraduate dissertations - from proposal submission to final approval.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            {user && (
+              <Link to="/dashboard" className={`${tw.btnAccent} px-8 py-3 text-base shadow-lg hover:scale-105 transform`}>
+                Go to Dashboard →
               </Link>
             )}
           </div>
         </div>
+      </div>
 
-        <div className="mt-20 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Academic Tracks Available</h2>
-          <div className="flex flex-wrap justify-center gap-3 mt-6">
-            {['Computer Science', 'Software Engineering', 'Data Science', 'Artificial Intelligence',
-              'Cybersecurity', 'Information Systems', 'Computer Networks', 'Human-Computer Interaction'
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <Slider />
+      </div>
+
+      <div className="bg-white py-16 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-[#1a237e] mb-2">Platform Features</h2>
+            <div className="w-12 h-1 bg-[#f26522] mx-auto rounded-full" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {FEATURES.map(f => (
+              <div key={f.title} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition group">
+                <div className="w-14 h-14 rounded-full border-2 border-[#f26522] flex items-center justify-center text-2xl mb-4 group-hover:bg-[#f26522]/10 transition">
+                  {f.icon}
+                </div>
+                <h3 className="text-[#1a237e] font-bold text-base mb-2">{f.title}</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">{f.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-[#1a237e] py-16 px-4">
+        <div className="max-w-7xl mx-auto text-center">
+          <h2 className="text-3xl font-bold text-white mb-2">Academic Tracks</h2>
+          <div className="w-12 h-1 bg-[#f26522] mx-auto rounded-full mb-8" />
+          <div className="flex flex-wrap justify-center gap-3">
+            {[
+              'Computer Science', 'Web Technologies',
+              'Business Informatics', 'Artificial Intelligence & Data Science'
             ].map(track => (
-              <span key={track} className="px-4 py-2 bg-white text-gray-700 rounded-full shadow-md text-sm font-medium">
+              <span key={track} className="px-5 py-2 bg-white/10 border border-white/20 text-white rounded-full text-sm font-medium hover:bg-[#f26522]/20 hover:border-[#f26522] transition">
                 {track}
               </span>
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="bg-[#0d1b6e] py-6 px-4 text-center">
+        <p className="text-blue-200 text-sm">
+          © {new Date().getFullYear()} University of York - Europe Campus · ThesisFlow
+        </p>
       </div>
     </div>
   );

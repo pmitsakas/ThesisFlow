@@ -2,6 +2,7 @@ const Dissertation = require('../models/Dissertation');
 const User = require('../models/User');
 const { sendProposalApprovedEmail, sendProposalRejectedEmail } = require('../services/emailService');
 const Notification = require('../models/Notification');
+const { deleteDissertationCascade } = require('../utils/cascadeDelete');
 
 exports.getAllDissertations = async (req, res) => {
   try {
@@ -189,7 +190,7 @@ exports.deleteDissertation = async (req, res) => {
       });
     }
 
-    await Dissertation.findByIdAndDelete(id);
+    await deleteDissertationCascade(id);
 
     res.status(200).json({
       success: true,
@@ -635,11 +636,15 @@ exports.approveProposal = async (req, res) => {
     if (description) dissertation.description = description;
     await dissertation.save();
 
-    await Dissertation.deleteMany({
+    const otherPending = await Dissertation.find({
       studentId: studentObjectId,
       status: 'pending_approval',
       _id: { $ne: dissertation._id }
-    });
+    }).select('_id');
+
+    for (const d of otherPending) {
+      await deleteDissertationCascade(d._id);
+    }
 
     await Notification.createNotification({
       userId: studentObjectId,
@@ -742,7 +747,7 @@ exports.rejectProposal = async (req, res) => {
       }
     }
 
-    await Dissertation.findByIdAndDelete(id);
+    await deleteDissertationCascade(id);
 
     res.status(200).json({
       success: true,
@@ -789,7 +794,7 @@ exports.withdrawProposal = async (req, res) => {
       });
     }
 
-    await Dissertation.findByIdAndDelete(id);
+    await deleteDissertationCascade(id);
 
     res.status(200).json({ success: true, message: 'Proposal withdrawn successfully' });
 

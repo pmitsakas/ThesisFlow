@@ -196,7 +196,7 @@ export default function Onboarding() {
             </div>
           ))}
           <span className="ml-2 text-sm text-gray-500 font-medium">
-            Βήμα {currentStep} από 3
+            Step {currentStep} from 3
           </span>
         </div>
         <div />

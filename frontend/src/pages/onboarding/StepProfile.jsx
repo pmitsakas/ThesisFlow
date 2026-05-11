@@ -7,10 +7,10 @@ const LANGUAGES = profileQuestions.programmingLanguages;
 const MAX_INTERESTS = 5;
 
 const SUB_STEPS = [
-  { id: 1, title: 'Τι σε ενδιαφέρει;', subtitle: 'Επέλεξε μέχρι 5 θέματα που σε ενδιαφέρουν περισσότερο' },
-  { id: 2, title: 'Εργαλεία & Γλώσσες', subtitle: 'Τι εργαλεία γνωρίζεις και σε ποιο επίπεδο;' },
-  { id: 3, title: 'Στυλ εργασίας', subtitle: 'Τι είδος project προτιμάς;' },
-  { id: 4, title: 'Λίγα λόγια για σένα', subtitle: 'Προαιρετικά - βοηθά το AI να σου κάνει καλύτερη πρόταση' },
+  { id: 1, title: 'What interests you?', subtitle: 'Select up to 5 topics you are most interested in' },
+  { id: 2, title: 'Tools & Languages', subtitle: 'What tools do you know and at what level?' },
+  { id: 3, title: 'Work style', subtitle: 'What type of project do you prefer?' },
+  { id: 4, title: 'A bit about you', subtitle: 'Optional - helps the AI generate a better proposal for you' },
 ];
 
 const Chip = ({ label, selected, onClick, disabled }) => (
@@ -19,10 +19,10 @@ const Chip = ({ label, selected, onClick, disabled }) => (
     onClick={onClick}
     disabled={disabled && !selected}
     className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-150 ${selected
-        ? 'bg-purple-600 border-purple-600 text-white shadow-sm'
-        : disabled
-          ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
-          : 'bg-white border-gray-300 text-gray-700 hover:border-purple-400 hover:text-purple-600'
+      ? 'bg-purple-600 border-purple-600 text-white shadow-sm'
+      : disabled
+        ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
+        : 'bg-white border-gray-300 text-gray-700 hover:border-purple-400 hover:text-purple-600'
       }`}
   >
     {label}
@@ -35,8 +35,8 @@ const SubStepDots = ({ total, current }) => (
       <div
         key={i}
         className={`rounded-full transition-all duration-300 ${i + 1 === current ? 'w-6 h-2 bg-purple-600' :
-            i + 1 < current ? 'w-2 h-2 bg-purple-300' :
-              'w-2 h-2 bg-gray-200'
+          i + 1 < current ? 'w-2 h-2 bg-purple-300' :
+            'w-2 h-2 bg-gray-200'
           }`}
       />
     ))}
@@ -44,30 +44,15 @@ const SubStepDots = ({ total, current }) => (
 );
 
 const PROJECT_STYLES = [
-  {
-    value: 'theoretical',
-    icon: '📚',
-    title: 'Research',
-    desc: 'Θεωρητική ανάλυση, papers, αλγόριθμοι'
-  },
-  {
-    value: 'practical',
-    icon: '⚙️',
-    title: 'Practical',
-    desc: 'Ανάπτυξη λογισμικού, υλοποίηση συστημάτων'
-  },
-  {
-    value: 'mixed',
-    icon: '🔀',
-    title: 'Hybrid',
-    desc: 'Συνδυασμός θεωρίας και πράξης'
-  },
+  { value: 'theoretical', icon: '📚', title: 'Research', desc: 'Theoretical analysis, papers, algorithms' },
+  { value: 'practical', icon: '⚙️', title: 'Practical', desc: 'Software development, system implementation' },
+  { value: 'mixed', icon: '🔀', title: 'Hybrid', desc: 'Combination of theory and practice' },
 ];
 
 const DIFFICULTY_OPTIONS = [
-  { value: 'beginner', label: 'Beginner', desc: 'Βασισμένο στη γνώση των μαθημάτων' },
-  { value: 'intermediate', label: 'Intermediate', desc: 'Εξερεύνηση νέων τεχνολογιών' },
-  { value: 'advanced', label: 'Advanced', desc: 'Cutting-edge έρευνα & καινοτομία' },
+  { value: 'beginner', label: 'Beginner', desc: 'Based on existing course knowledge' },
+  { value: 'intermediate', label: 'Intermediate', desc: 'Exploring new technologies' },
+  { value: 'advanced', label: 'Advanced', desc: 'Cutting-edge research & innovation' },
 ];
 
 export default function StepProfile({ profile, onArrayChange, onFieldChange, onNext, onBack, saving, error }) {
@@ -101,14 +86,14 @@ export default function StepProfile({ profile, onArrayChange, onFieldChange, onN
       {subStep === 1 && (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm text-gray-500">Επιλεγμένα: {profile.advancedTopicsInterest.length}/{MAX_INTERESTS}</span>
+            <span className="text-sm text-gray-500">Selected : {profile.advancedTopicsInterest.length}/{MAX_INTERESTS}</span>
             {profile.advancedTopicsInterest.length > 0 && (
               <button
                 type="button"
                 onClick={() => profile.advancedTopicsInterest.forEach(i => onArrayChange('advancedTopicsInterest', i))}
                 className="text-xs text-red-500 hover:text-red-700"
               >
-                Καθαρισμός
+                Clear
               </button>
             )}
           </div>
@@ -129,7 +114,7 @@ export default function StepProfile({ profile, onArrayChange, onFieldChange, onN
       {subStep === 2 && (
         <div className="space-y-6">
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Γλώσσες προγραμματισμού</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Programming languages</h3>
             <div className="flex flex-wrap gap-2">
               {LANGUAGES.map(lang => (
                 <Chip
@@ -142,7 +127,7 @@ export default function StepProfile({ profile, onArrayChange, onFieldChange, onN
             </div>
           </div>
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Επίπεδο γνώσης</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Knowledge level</h3>
             <div className="grid grid-cols-3 gap-3">
               {DIFFICULTY_OPTIONS.map(opt => (
                 <button
@@ -150,8 +135,8 @@ export default function StepProfile({ profile, onArrayChange, onFieldChange, onN
                   type="button"
                   onClick={() => onFieldChange('difficultyLevel', opt.value)}
                   className={`p-4 rounded-xl border-2 text-left transition-all duration-150 ${profile.difficultyLevel === opt.value
-                      ? 'border-purple-600 bg-purple-50'
-                      : 'border-gray-200 hover:border-purple-300'
+                    ? 'border-purple-600 bg-purple-50'
+                    : 'border-gray-200 hover:border-purple-300'
                     }`}
                 >
                   <p className={`font-semibold text-sm ${profile.difficultyLevel === opt.value ? 'text-purple-700' : 'text-gray-800'}`}>
@@ -173,8 +158,8 @@ export default function StepProfile({ profile, onArrayChange, onFieldChange, onN
               type="button"
               onClick={() => onFieldChange('researchMethodology', style.value)}
               className={`w-full p-5 rounded-2xl border-2 text-left transition-all duration-150 flex items-center gap-4 ${profile.researchMethodology === style.value
-                  ? 'border-purple-600 bg-purple-50 shadow-sm'
-                  : 'border-gray-200 bg-white hover:border-purple-300'
+                ? 'border-purple-600 bg-purple-50 shadow-sm'
+                : 'border-gray-200 bg-white hover:border-purple-300'
                 }`}
             >
               <span className="text-3xl">{style.icon}</span>
@@ -198,12 +183,12 @@ export default function StepProfile({ profile, onArrayChange, onFieldChange, onN
 
       {subStep === 4 && (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Στόχοι</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Goals</label>
           <textarea
             value={profile.careerGoals}
             onChange={e => onFieldChange('careerGoals', e.target.value)}
             rows={5}
-            placeholder="π.χ. Software Engineer, Data Scientist, AI Researcher..."
+            placeholder="e.g. Software Engineer, Data Scientist, AI Researcher..."
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
           />
         </div>
@@ -216,7 +201,7 @@ export default function StepProfile({ profile, onArrayChange, onFieldChange, onN
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition"
         >
           <FiArrowLeft className="w-4 h-4" />
-          Πίσω
+          Back
         </button>
         <button
           type="button"
@@ -225,10 +210,10 @@ export default function StepProfile({ profile, onArrayChange, onFieldChange, onN
           className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-medium shadow-sm transition disabled:opacity-50"
         >
           {saving && subStep === SUB_STEPS.length
-            ? <><FiLoader className="w-4 h-4 animate-spin" /> Αποθήκευση...</>
+            ? <><FiLoader className="w-4 h-4 animate-spin" /> Saving...</>
             : subStep === SUB_STEPS.length
-              ? <>Αποθήκευση <FiArrowRight className="w-4 h-4" /></>
-              : <>Συνέχεια <FiArrowRight className="w-4 h-4" /></>
+              ? <>Save <FiArrowRight className="w-4 h-4" /></>
+              : <>Continue <FiArrowRight className="w-4 h-4" /></>
           }
         </button>
       </div>

@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const { deleteUserCascade } = require('../utils/cascadeDelete');
 
 exports.getAllUsers = async (req, res) => {
   try {
@@ -231,7 +232,7 @@ exports.deleteUser = async (req, res) => {
       });
     }
 
-    await User.findByIdAndDelete(id);
+    await deleteUserCascade(id);
 
     res.status(200).json({
       success: true,

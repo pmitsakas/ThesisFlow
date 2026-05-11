@@ -8,22 +8,22 @@ const LANGUAGES = profileQuestions.programmingLanguages;
 const MAX_INTERESTS = 5;
 
 const SUB_STEPS = [
-  { id: 1, title: 'Τι σε ενδιαφέρει;', subtitle: 'Επέλεξε μέχρι 5 θέματα που σε ενδιαφέρουν περισσότερο' },
-  { id: 2, title: 'Εργαλεία & Γλώσσες', subtitle: 'Τι εργαλεία γνωρίζεις και σε ποιο επίπεδο;' },
-  { id: 3, title: 'Στυλ εργασίας', subtitle: 'Τι είδος project προτιμάς;' },
-  { id: 4, title: 'Στόχοι', subtitle: 'Προαιρετικά — βοηθά το AI να σου κάνει καλύτερη πρόταση' },
+  { id: 1, title: 'What interests you?', subtitle: 'Select up to 5 topics you are most interested in' },
+  { id: 2, title: 'Tools & Languages', subtitle: 'What tools do you know and at what level?' },
+  { id: 3, title: 'Work style', subtitle: 'What type of project do you prefer?' },
+  { id: 4, title: 'Goals', subtitle: 'Optional - helps the AI generate a better proposal for you' },
 ];
 
 const PROJECT_STYLES = [
-  { value: 'theoretical', icon: '📚', title: 'Research', desc: 'Θεωρητική ανάλυση, papers, αλγόριθμοι' },
-  { value: 'practical',   icon: '⚙️', title: 'Practical', desc: 'Ανάπτυξη λογισμικού, υλοποίηση συστημάτων' },
-  { value: 'mixed',       icon: '🔀', title: 'Hybrid', desc: 'Συνδυασμός θεωρίας και πράξης' },
+  { value: 'theoretical', icon: '📚', title: 'Research',  desc: 'Theoretical analysis, papers, algorithms' },
+  { value: 'practical',   icon: '⚙️', title: 'Practical', desc: 'Software development, system implementation' },
+  { value: 'mixed',       icon: '🔀', title: 'Hybrid',    desc: 'Combination of theory and practice' },
 ];
 
 const DIFFICULTY_OPTIONS = [
-  { value: 'beginner',     label: 'Beginner',     desc: 'Βασισμένο στη γνώση των μαθημάτων' },
-  { value: 'intermediate', label: 'Intermediate', desc: 'Εξερεύνηση νέων τεχνολογιών' },
-  { value: 'advanced',     label: 'Advanced',     desc: 'Cutting-edge έρευνα & καινοτομία' },
+  { value: 'beginner',     label: 'Beginner',     desc: 'Based on existing course knowledge' },
+  { value: 'intermediate', label: 'Intermediate', desc: 'Exploring new technologies' },
+  { value: 'advanced',     label: 'Advanced',     desc: 'Cutting-edge research & innovation' },
 ];
 
 const Chip = ({ label, selected, onClick, disabled }) => (
@@ -112,7 +112,7 @@ const StudentProfile = () => {
     setError('');
     try {
       await userAPI.updateMyProfile({ studentProfile: profile });
-      setSuccess('Το προφίλ αποθηκεύτηκε!');
+      setSuccess('Profile saved!');
       setTimeout(() => setSuccess(''), 4000);
     } catch (err) {
       setError(err.response?.data?.error?.message || 'Failed to update profile');
@@ -137,8 +137,8 @@ const StudentProfile = () => {
       <div className="mb-6 flex items-center gap-3">
         <FiUser className="text-blue-600 w-7 h-7" />
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Το προφίλ μου</h1>
-          <p className="text-sm text-gray-500">Ενημέρωσε το προφίλ σου για καλύτερες AI προτάσεις</p>
+          <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
+          <p className="text-sm text-gray-500">Update your profile for better AI proposals</p>
         </div>
       </div>
 
@@ -156,10 +156,10 @@ const StudentProfile = () => {
       {subStep === 1 && (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm text-gray-500">Επιλεγμένα: {profile.advancedTopicsInterest.length}/{MAX_INTERESTS}</span>
+            <span className="text-sm text-gray-500">Selected: {profile.advancedTopicsInterest.length}/{MAX_INTERESTS}</span>
             {profile.advancedTopicsInterest.length > 0 && (
               <button type="button" onClick={() => setField('advancedTopicsInterest', [])} className="text-xs text-red-500 hover:text-red-700">
-                Καθαρισμός
+                Clear
               </button>
             )}
           </div>
@@ -180,7 +180,7 @@ const StudentProfile = () => {
       {subStep === 2 && (
         <div className="space-y-6">
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Γλώσσες προγραμματισμού</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Programming languages</h3>
             <div className="flex flex-wrap gap-2">
               {LANGUAGES.map(lang => (
                 <Chip
@@ -193,7 +193,7 @@ const StudentProfile = () => {
             </div>
           </div>
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Επίπεδο γνώσης</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Knowledge level</h3>
             <div className="grid grid-cols-3 gap-3">
               {DIFFICULTY_OPTIONS.map(opt => (
                 <button
@@ -247,12 +247,12 @@ const StudentProfile = () => {
 
       {subStep === 4 && (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Στόχοι</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Goals</label>
           <textarea
             value={profile.careerGoals}
             onChange={e => setField('careerGoals', e.target.value)}
             rows={5}
-            placeholder="π.χ. Software Engineer, Data Scientist, AI Researcher..."
+            placeholder="e.g. Software Engineer, Data Scientist, AI Researcher..."
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           />
         </div>
@@ -265,7 +265,7 @@ const StudentProfile = () => {
           disabled={subStep === 1}
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition disabled:opacity-0"
         >
-          <FiArrowLeft className="w-4 h-4" /> Πίσω
+          <FiArrowLeft className="w-4 h-4" /> Back
         </button>
 
         {isLastStep ? (
@@ -275,7 +275,7 @@ const StudentProfile = () => {
             disabled={saving}
             className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium shadow-sm transition disabled:opacity-50"
           >
-            {saving ? <><FiLoader className="w-4 h-4 animate-spin" /> Αποθήκευση...</> : <><FiSave className="w-4 h-4" /> Αποθήκευση</>}
+            {saving ? <><FiLoader className="w-4 h-4 animate-spin" /> Saving...</> : <><FiSave className="w-4 h-4" /> Save</>}
           </button>
         ) : (
           <button
@@ -283,7 +283,7 @@ const StudentProfile = () => {
             onClick={() => setSubStep(s => s + 1)}
             className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium shadow-sm transition"
           >
-            Συνέχεια <FiArrowRight className="w-4 h-4" />
+            Continue <FiArrowRight className="w-4 h-4" />
           </button>
         )}
       </div>

@@ -133,8 +133,8 @@ exports.createComment = async (req, res) => {
         await Notification.createNotification({
           userId: dissertation.studentId,
           type: 'comment_added',
-          title: 'Νέο σχόλιο',
-          message: `Ο/Η ${commenterName} πρόσθεσε σχόλιο στην εργασία "${dissertation.title}"`,
+          title: 'New comment',
+          message: `${commenterName} commented on your dissertation "${dissertation.title}"`,
           relatedId: dissertationId,
           relatedModel: 'Dissertation'
         });
@@ -146,8 +146,8 @@ exports.createComment = async (req, res) => {
         await Notification.createNotification({
           userId: dissertation.supervisorId,
           type: 'comment_added',
-          title: 'Νέο σχόλιο',
-          message: `Ο/Η ${commenterName} πρόσθεσε σχόλιο στην εργασία "${dissertation.title}"`,
+          title: 'New comment',
+          message: `${commenterName} commented on your dissertation "${dissertation.title}"`,
           relatedId: dissertationId,
           relatedModel: 'Dissertation'
         });

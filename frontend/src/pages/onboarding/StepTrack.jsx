@@ -5,8 +5,8 @@ import { TRACKS, TRACK_COLORS, TRACK_LABELS } from './constants';
 const StepTrack = ({ userName, onSelect, saving }) => (
   <div className="max-w-lg mx-auto px-4 py-16">
     <div className="text-center mb-10">
-      <h2 className="text-3xl font-bold text-gray-900 mb-2">Καλώς ήρθες, {userName}!</h2>
-      <p className="text-gray-500">Επέλεξε το track σου για να ξεκινήσεις</p>
+      <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome, {userName}!</h2>
+      <p className="text-gray-500">Select your academic track to get started</p>
     </div>
     <div className="grid grid-cols-1 gap-4">
       {TRACKS.map(track => (
