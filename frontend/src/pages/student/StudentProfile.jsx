@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { userAPI } from '../../services/api';
+import { tw } from '../../theme';
 import { FiUser, FiSave, FiLoader, FiCheckCircle, FiArrowLeft, FiArrowRight } from 'react-icons/fi';
 import profileQuestions from '../../config/profileQuestions.json';
 
@@ -33,10 +34,10 @@ const Chip = ({ label, selected, onClick, disabled }) => (
     disabled={disabled && !selected}
     className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all duration-150 ${
       selected
-        ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+        ? 'bg-[#1a237e] border-[#1a237e] text-white shadow-sm'
         : disabled
-        ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
-        : 'bg-white border-gray-300 text-gray-700 hover:border-purple-400 hover:text-blue-600'
+          ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
+          : 'bg-white border-gray-300 text-gray-700 hover:border-[#1a237e] hover:text-[#1a237e]'
     }`}
   >
     {label}
@@ -49,8 +50,8 @@ const SubStepDots = ({ total, current }) => (
       <div
         key={i}
         className={`rounded-full transition-all duration-300 ${
-          i + 1 === current ? 'w-6 h-2 bg-blue-600' :
-          i + 1 < current  ? 'w-2 h-2 bg-blue-300' :
+          i + 1 === current ? 'w-6 h-2 bg-[#f26522]' :
+          i + 1 < current  ? 'w-2 h-2 bg-[#f26522]/40' :
                              'w-2 h-2 bg-gray-200'
         }`}
       />
@@ -87,11 +88,8 @@ const StudentProfile = () => {
             careerGoals:            sp.careerGoals            || '',
           });
         }
-      } catch {
-        setError('Failed to load profile');
-      } finally {
-        setLoading(false);
-      }
+      } catch { setError('Failed to load profile'); }
+      finally { setLoading(false); }
     };
     fetchProfile();
   }, []);
@@ -124,32 +122,31 @@ const StudentProfile = () => {
   const isLastStep = subStep === SUB_STEPS.length;
   const interestsMax = profile.advancedTopicsInterest.length >= MAX_INTERESTS;
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <FiLoader className="animate-spin text-4xl text-blue-600" />
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="flex justify-center items-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1a237e]" />
+    </div>
+  );
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 relative">
       <div className="mb-6 flex items-center gap-3">
-        <FiUser className="text-blue-600 w-7 h-7" />
+        <div className="w-10 h-10 rounded-full bg-[#1a237e] flex items-center justify-center">
+          <FiUser className="text-white w-5 h-5" />
+        </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
+          <h1 className="text-2xl font-bold text-[#1a237e]">My Profile</h1>
           <p className="text-sm text-gray-500">Update your profile for better AI proposals</p>
         </div>
       </div>
+      <div className="w-10 h-1 bg-[#f26522] mb-8 rounded-full" />
 
-      {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">{error}</div>
-      )}
+      {error && <div className={`${tw.alertError} mb-4`}>{error}</div>}
 
       <SubStepDots total={SUB_STEPS.length} current={subStep} />
 
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-1">{SUB_STEPS[subStep - 1].title}</h2>
+        <h2 className="text-2xl font-bold text-[#1a237e] mb-1">{SUB_STEPS[subStep - 1].title}</h2>
         <p className="text-gray-500 text-sm">{SUB_STEPS[subStep - 1].subtitle}</p>
       </div>
 
@@ -180,7 +177,7 @@ const StudentProfile = () => {
       {subStep === 2 && (
         <div className="space-y-6">
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Programming languages</h3>
+            <h3 className="text-sm font-semibold text-[#1a237e] mb-3">Programming languages</h3>
             <div className="flex flex-wrap gap-2">
               {LANGUAGES.map(lang => (
                 <Chip
@@ -193,7 +190,7 @@ const StudentProfile = () => {
             </div>
           </div>
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Knowledge level</h3>
+            <h3 className="text-sm font-semibold text-[#1a237e] mb-3">Knowledge level</h3>
             <div className="grid grid-cols-3 gap-3">
               {DIFFICULTY_OPTIONS.map(opt => (
                 <button
@@ -202,11 +199,11 @@ const StudentProfile = () => {
                   onClick={() => setField('difficultyLevel', opt.value)}
                   className={`p-4 rounded-xl border-2 text-left transition-all duration-150 ${
                     profile.difficultyLevel === opt.value
-                      ? 'border-blue-600 bg-blue-50'
-                      : 'border-gray-200 hover:border-blue-300'
+                      ? 'border-[#1a237e] bg-[#1a237e]/5'
+                      : 'border-gray-200 hover:border-[#1a237e]/40'
                   }`}
                 >
-                  <p className={`font-semibold text-sm ${profile.difficultyLevel === opt.value ? 'text-blue-700' : 'text-gray-800'}`}>{opt.label}</p>
+                  <p className={`font-semibold text-sm ${profile.difficultyLevel === opt.value ? 'text-[#1a237e]' : 'text-gray-800'}`}>{opt.label}</p>
                   <p className="text-xs text-gray-500 mt-1">{opt.desc}</p>
                 </button>
               ))}
@@ -224,17 +221,17 @@ const StudentProfile = () => {
               onClick={() => setField('researchMethodology', style.value)}
               className={`w-full p-5 rounded-2xl border-2 text-left transition-all duration-150 flex items-center gap-4 ${
                 profile.researchMethodology === style.value
-                  ? 'border-blue-600 bg-blue-50 shadow-sm'
-                  : 'border-gray-200 bg-white hover:border-blue-300'
+                  ? 'border-[#1a237e] bg-[#1a237e]/5 shadow-sm'
+                  : 'border-gray-200 bg-white hover:border-[#1a237e]/40'
               }`}
             >
               <span className="text-3xl">{style.icon}</span>
               <div>
-                <p className={`font-semibold text-base ${profile.researchMethodology === style.value ? 'text-blue-700' : 'text-gray-800'}`}>{style.title}</p>
+                <p className={`font-semibold text-base ${profile.researchMethodology === style.value ? 'text-[#1a237e]' : 'text-gray-800'}`}>{style.title}</p>
                 <p className="text-sm text-gray-500 mt-0.5">{style.desc}</p>
               </div>
               {profile.researchMethodology === style.value && (
-                <div className="ml-auto w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                <div className="ml-auto w-5 h-5 rounded-full bg-[#f26522] flex items-center justify-center flex-shrink-0">
                   <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                   </svg>
@@ -247,13 +244,13 @@ const StudentProfile = () => {
 
       {subStep === 4 && (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Goals</label>
+          <label className="block text-sm font-semibold text-[#1a237e] mb-1.5">Goals</label>
           <textarea
             value={profile.careerGoals}
             onChange={e => setField('careerGoals', e.target.value)}
             rows={5}
             placeholder="e.g. Software Engineer, Data Scientist, AI Researcher..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className={tw.textarea}
           />
         </div>
       )}
@@ -263,7 +260,7 @@ const StudentProfile = () => {
           type="button"
           onClick={() => setSubStep(s => s - 1)}
           disabled={subStep === 1}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition disabled:opacity-0"
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#1a237e] transition disabled:opacity-0"
         >
           <FiArrowLeft className="w-4 h-4" /> Back
         </button>
@@ -273,15 +270,18 @@ const StudentProfile = () => {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium shadow-sm transition disabled:opacity-50"
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#1a237e] hover:bg-[#0d1b6e] text-white rounded-xl text-sm font-medium shadow-sm transition disabled:opacity-50"
           >
-            {saving ? <><FiLoader className="w-4 h-4 animate-spin" /> Saving...</> : <><FiSave className="w-4 h-4" /> Save</>}
+            {saving
+              ? <><FiLoader className="w-4 h-4 animate-spin" /> Saving...</>
+              : <><FiSave className="w-4 h-4" /> Save</>
+            }
           </button>
         ) : (
           <button
             type="button"
             onClick={() => setSubStep(s => s + 1)}
-            className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium shadow-sm transition"
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#1a237e] hover:bg-[#0d1b6e] text-white rounded-xl text-sm font-medium shadow-sm transition"
           >
             Continue <FiArrowRight className="w-4 h-4" />
           </button>
@@ -289,8 +289,8 @@ const StudentProfile = () => {
       </div>
 
       {success && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 z-50 border border-gray-700">
-          <FiCheckCircle className="text-green-400 text-xl" />
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-[#0d1b6e] text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 z-50 border border-[#f26522]/30">
+          <FiCheckCircle className="text-[#f26522] text-xl" />
           <span className="font-medium text-sm">{success}</span>
         </div>
       )}

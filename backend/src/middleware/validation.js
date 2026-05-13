@@ -115,7 +115,7 @@ exports.validateProposalCreate = [
   body('description')
     .optional()
     .trim()
-    .isLength({ max: 3000 }).withMessage('Description must not exceed 3000 characters'),
+    .isLength({ max: 4000 }).withMessage('Description must not exceed 4000 characters'),
   body('supervisorId')
     .notEmpty().withMessage('Supervisor ID is required')
     .isMongoId().withMessage('Invalid supervisor ID'),
@@ -135,7 +135,7 @@ exports.validateDissertationUpdate = [
   body('description')
     .optional()
     .trim()
-    .isLength({ max: 3000 }).withMessage('Description must not exceed 3000 characters'),
+    .isLength({ max: 4000 }).withMessage('Description must not exceed 4000 characters'),
   handleValidationErrors
 ];
 

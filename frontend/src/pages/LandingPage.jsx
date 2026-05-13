@@ -92,24 +92,36 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-[#f5f5f5]">
 
-      <div className="bg-[#1a237e] text-white py-20 px-4">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-5xl sm:text-6xl font-extrabold mb-6 leading-tight">
-            Dissertation
-            <span className="text-[#f26522]"> Administration</span>
-          </h1>
-          <p className="text-lg text-blue-100 max-w-2xl mx-auto mb-10">
-            A comprehensive platform for managing undergraduate dissertations - from proposal submission to final approval.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            {user && (
-              <Link to="/dashboard" className={`${tw.btnAccent} px-8 py-3 text-base shadow-lg hover:scale-105 transform`}>
-                Go to Dashboard →
-              </Link>
-            )}
-          </div>
-        </div>
-      </div>
+      <div className="bg-[#1a237e] text-white py-12 px-4">
+  <div className="max-w-7xl mx-auto text-center">
+
+    <h1 className="text-4xl sm:text-5xl font-extrabold mb-3 leading-tight tracking-tight">
+      AI-Powered
+      <span className="block text-[#f26522]">Dissertation Management</span>
+    </h1>
+
+    <p className="text-base text-blue-100 max-w-xl mx-auto mb-6 leading-relaxed">
+      From AI-generated proposals to supervisor approval and progress tracking - everything your final year needs, in one platform.
+    </p>
+
+    <div className="flex flex-wrap justify-center gap-3">
+      {user ? (
+        <Link to="/dashboard" className={`${tw.btnAccent} px-6 py-2.5 text-sm shadow-lg hover:scale-105 transform`}>
+          Go to Dashboard →
+        </Link>
+      ) : (
+        <>
+          <Link to="/login" className="bg-white text-[#1a237e] hover:bg-gray-100 font-semibold px-6 py-2.5 rounded-lg text-sm shadow-lg transition hover:scale-105 transform">
+            Login
+          </Link>
+          <Link to="/register" className={`${tw.btnAccent} px-6 py-2.5 text-sm shadow-lg hover:scale-105 transform`}>
+            Register →
+          </Link>
+        </>
+      )}
+    </div>
+  </div>
+</div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <Slider />

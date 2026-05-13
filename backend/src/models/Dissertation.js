@@ -29,7 +29,7 @@ const dissertationSchema = new mongoose.Schema({
   description: {
     type: String,
     trim: true,
-    maxlength: [3000, 'Description must not exceed 3000 characters']
+    maxlength: [4000, 'Description must not exceed 4000 characters']
   },
   status: {
     type: String,
