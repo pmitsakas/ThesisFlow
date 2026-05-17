@@ -153,7 +153,7 @@ const LandingPage = () => {
           <div className="w-12 h-1 bg-[#f26522] mx-auto rounded-full mb-8" />
           <div className="flex flex-wrap justify-center gap-3">
             {[
-              'Computer Science', 'Web Technologies',
+              'Web Technologies',
               'Business Informatics', 'Artificial Intelligence & Data Science'
             ].map(track => (
               <span key={track} className="px-5 py-2 bg-white/10 border border-white/20 text-white rounded-full text-sm font-medium hover:bg-[#f26522]/20 hover:border-[#f26522] transition">
@@ -166,7 +166,7 @@ const LandingPage = () => {
 
       <div className="bg-[#0d1b6e] py-6 px-4 text-center">
         <p className="text-blue-200 text-sm">
-          © {new Date().getFullYear()} University of York - Europe Campus · ThesisFlow
+          © {new Date().getFullYear()} ThesisFlow
         </p>
       </div>
     </div>

@@ -1,11 +1,10 @@
-const authRoutes = require('./auth.routes');
-const userRoutes = require('./user.routes');
+const authRoutes = require('./Auth.routes');
+const userRoutes = require('./User.routes');
 const dissertationRoutes = require('./Dissertation.routes');
 const commentRoutes = require('./comment.routes');
 const settingsRoutes = require('./settings.routes');
 const notificationRoutes = require('./notification.routes');
 const fileRoutes = require('./file.routes');
-
 
 module.exports = {
   authRoutes,

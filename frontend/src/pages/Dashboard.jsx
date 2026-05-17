@@ -3,24 +3,23 @@ import { useAuth } from '../context/AuthContext';
 import { tw } from '../theme';
 import { FiPlus, FiUsers, FiClock, FiUser, FiFileText, FiSettings } from 'react-icons/fi';
 import { FiUsers as FiUsersIcon } from 'react-icons/fi';
+import ProposalModal from '../components/ProposalModal';
 
 const Dashboard = () => {
   const { user, hasActiveDissertation } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showProposalModal, setShowProposalModal] = useState(false);
 
-  const getRoleBadgeColor = (role) => {
-    switch (role) {
-      case 'admin': return 'bg-[#f26522]/10 text-[#f26522]';
-      case 'teacher': return 'bg-[#1565c0]/10 text-[#1565c0]';
-      case 'student': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-700';
-    }
-  };
+  const getRoleBadgeColor = (role) => ({
+    admin:   'bg-[#f26522]/10 text-[#f26522]',
+    teacher: 'bg-[#1a237e]/10 text-[#1a237e]',
+    student: 'bg-green-100 text-green-800',
+  }[role] || 'bg-gray-100 text-gray-800');
 
   const getStatusBadgeColor = (isActive) =>
     isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
 
-  const actionLink = (href, icon, label, active = true) => (
+  const actionLink = (href, icon, label) => (
     <a
       href={href}
       className="w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 border border-gray-200 hover:border-[#f26522] hover:bg-[#f26522]/5 group"
@@ -136,6 +135,15 @@ const Dashboard = () => {
                     ? actionLink('/my-dissertation', <FiFileText className="h-5 w-5" />, 'My Dissertation')
                     : actionLink('/my-proposals', <FiFileText className="h-5 w-5" />, 'My Proposals')
                   }
+                  {!hasActiveDissertation && (
+                    <button
+                      onClick={() => setShowProposalModal(true)}
+                      className="w-full text-left px-4 py-3 rounded-lg transition flex items-center gap-3 border border-gray-200 hover:border-[#f26522] hover:bg-[#f26522]/5 group cursor-pointer"
+                    >
+                      <span className="text-[#1a237e] group-hover:text-[#f26522] transition"><FiPlus className="h-5 w-5" /></span>
+                      <span className="text-sm font-medium text-gray-700 group-hover:text-[#1a237e]">New Proposal</span>
+                    </button>
+                  )}
                 </>)}
                 {user?.role === 'teacher' && (<>
                   {actionLink('/pending-proposals', <FiClock className="h-5 w-5" />, 'Pending Proposals')}
@@ -162,6 +170,13 @@ const Dashboard = () => {
           <div onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30" />
         )}
       </div>
+
+      {showProposalModal && (
+        <ProposalModal
+          onClose={() => setShowProposalModal(false)}
+          onSubmitted={() => setShowProposalModal(false)}
+        />
+      )}
     </div>
   );
 };
